@@ -37,6 +37,7 @@ interface SignUpData {
   department: string;
   programme: string;
   role: UserRole;
+  supervisor_id?: string; // Required for students
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (data: SignUpData): Promise<{ error: Error | null }> => {
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -126,6 +127,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       return { error: new Error(error.message) };
+    }
+
+    // If student, assign to supervisor after successful signup
+    if (data.role === "student" && data.supervisor_id && authData.user) {
+      const { error: assignError } = await supabase.rpc("assign_student_to_supervisor", {
+        _student_id: authData.user.id,
+        _supervisor_id: data.supervisor_id,
+      });
+
+      if (assignError) {
+        console.error("Error assigning supervisor:", assignError);
+        // Don't fail signup, but log the error - admin can fix later
+      }
     }
 
     return { error: null };

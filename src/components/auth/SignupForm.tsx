@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,8 +23,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { getFaculties, getDepartments, getProgrammes } from "@/lib/faculty-data";
+
+interface Supervisor {
+  id: string;
+  full_name: string;
+  email: string;
+  institution: string | null;
+  department: string | null;
+}
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -33,11 +42,21 @@ const signupSchema = z.object({
   department: z.string().min(1, "Please select a department"),
   programme: z.string().min(1, "Please select a programme"),
   role: z.enum(["student", "supervisor"], { required_error: "Please select a role" }),
+  supervisor_id: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  // If role is student, supervisor_id is required
+  if (data.role === "student") {
+    return !!data.supervisor_id;
+  }
+  return true;
+}, {
+  message: "Please select a supervisor",
+  path: ["supervisor_id"],
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -50,6 +69,8 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
   const [programmes, setProgrammes] = useState<string[]>([]);
+  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
+  const [supervisorsLoading, setSupervisorsLoading] = useState(true);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -63,10 +84,33 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
       department: "",
       programme: "",
       role: "student",
+      supervisor_id: "",
       password: "",
       confirmPassword: "",
     },
   });
+
+  const watchRole = form.watch("role");
+
+  // Fetch supervisors on mount
+  useEffect(() => {
+    const fetchSupervisors = async () => {
+      setSupervisorsLoading(true);
+      try {
+        const { data, error } = await supabase.rpc("get_supervisors");
+        if (error) {
+          console.error("Error fetching supervisors:", error);
+        } else {
+          setSupervisors(data || []);
+        }
+      } catch (err) {
+        console.error("Error fetching supervisors:", err);
+      } finally {
+        setSupervisorsLoading(false);
+      }
+    };
+    fetchSupervisors();
+  }, []);
 
   const watchFaculty = form.watch("faculty");
   const watchDepartment = form.watch("department");
@@ -88,6 +132,12 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
   }, [watchDepartment, watchFaculty, form]);
 
   const onSubmit = async (data: SignupFormValues) => {
+    // Validate supervisor selection for students
+    if (data.role === "student" && supervisors.length === 0) {
+      toast.error("No supervisors available. Please contact the administrator.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await signUp({
@@ -99,6 +149,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
         department: data.department,
         programme: data.programme,
         role: data.role,
+        supervisor_id: data.role === "student" ? data.supervisor_id : undefined,
       });
 
       if (error) {
@@ -275,6 +326,51 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
               </FormItem>
             )}
           />
+
+          {/* Supervisor Selection - Only shown for students */}
+          {watchRole === "student" && (
+            <FormField
+              control={form.control}
+              name="supervisor_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Supervisor *</FormLabel>
+                  {supervisorsLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading supervisors...
+                    </div>
+                  ) : supervisors.length === 0 ? (
+                    <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                      <AlertCircle className="h-4 w-4" />
+                      No supervisors available. Please contact the administrator.
+                    </div>
+                  ) : (
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your supervisor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {supervisors.map((supervisor) => (
+                          <SelectItem key={supervisor.id} value={supervisor.id}>
+                            <div className="flex flex-col">
+                              <span>{supervisor.full_name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {supervisor.department} • {supervisor.institution}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

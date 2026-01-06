@@ -198,6 +198,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_student_to_supervisor: {
+        Args: { _student_id: string; _supervisor_id: string }
+        Returns: undefined
+      }
+      get_supervisors: {
+        Args: never
+        Returns: {
+          department: string
+          email: string
+          full_name: string
+          id: string
+          institution: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
