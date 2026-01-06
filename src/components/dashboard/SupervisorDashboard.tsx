@@ -42,95 +42,96 @@ export default function SupervisorDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch assigned students
-      const { data: assignments } = await supabase
+      // Step 1: Fetch assigned student IDs
+      const { data: assignments, error: assignmentError } = await supabase
         .from("supervisor_students")
-        .select(`
-          student_id,
-          profiles!supervisor_students_student_id_fkey (
-            id,
-            full_name,
-            institution,
-            department
-          )
-        `)
+        .select("student_id")
         .eq("supervisor_id", user?.id);
 
-      if (assignments) {
-        const studentIds = assignments.map((a) => a.student_id);
+      if (assignmentError) {
+        console.error("Error fetching assignments:", assignmentError);
+        setLoading(false);
+        return;
+      }
 
-        // Get pending entries count for each student
-        const studentsWithCounts = await Promise.all(
-          assignments.map(async (assignment) => {
-            const { count } = await supabase
-              .from("logbook_entries")
-              .select("*", { count: "exact", head: true })
-              .eq("student_id", assignment.student_id)
-              .eq("status", "pending");
+      if (!assignments || assignments.length === 0) {
+        setStudents([]);
+        setStats({ totalStudents: 0, totalPendingReviews: 0, totalApproved: 0 });
+        setLoading(false);
+        return;
+      }
 
-            const studentProfile = assignment.profiles as any;
-            return {
-              id: assignment.student_id,
-              full_name: studentProfile?.full_name || "Unknown",
-              institution: studentProfile?.institution || "",
-              department: studentProfile?.department || "",
-              pendingEntries: count || 0,
-            };
-          })
-        );
+      const studentIds = assignments.map((a) => a.student_id);
 
-        setStudents(studentsWithCounts);
-        setStats((prev) => ({ ...prev, totalStudents: studentsWithCounts.length }));
+      // Step 2: Fetch profiles for assigned students
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, institution, department")
+        .in("id", studentIds);
 
-        // Fetch all pending entries from assigned students
-        if (studentIds.length > 0) {
-          const { data: entries } = await supabase
-            .from("logbook_entries")
-            .select(`
-              id,
-              entry_date,
-              activity_description,
-              student_id,
-              profiles!logbook_entries_student_id_fkey (
-                full_name
-              )
-            `)
-            .in("student_id", studentIds)
-            .eq("status", "pending")
-            .order("entry_date", { ascending: false })
-            .limit(5);
+      const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
-          if (entries) {
-            const mappedEntries = entries.map((entry) => ({
-              id: entry.id,
-              entry_date: entry.entry_date,
-              activity_description: entry.activity_description,
-              student_id: entry.student_id,
-              student_name: (entry.profiles as any)?.full_name || "Unknown",
-            }));
-            setPendingEntries(mappedEntries);
-          }
-
-          // Get total pending count
-          const { count: pendingCount } = await supabase
+      // Step 3: Get pending entries count for each student
+      const studentsWithCounts = await Promise.all(
+        studentIds.map(async (studentId) => {
+          const { count } = await supabase
             .from("logbook_entries")
             .select("*", { count: "exact", head: true })
-            .in("student_id", studentIds)
+            .eq("student_id", studentId)
             .eq("status", "pending");
 
-          const { count: approvedCount } = await supabase
-            .from("logbook_entries")
-            .select("*", { count: "exact", head: true })
-            .in("student_id", studentIds)
-            .eq("status", "approved");
+          const profile = profileMap.get(studentId);
+          return {
+            id: studentId,
+            full_name: profile?.full_name || "Unknown",
+            institution: profile?.institution || "",
+            department: profile?.department || "",
+            pendingEntries: count || 0,
+          };
+        })
+      );
 
-          setStats((prev) => ({
-            ...prev,
-            totalPendingReviews: pendingCount || 0,
-            totalApproved: approvedCount || 0,
-          }));
-        }
+      setStudents(studentsWithCounts);
+      setStats((prev) => ({ ...prev, totalStudents: studentsWithCounts.length }));
+
+      // Step 4: Fetch pending entries from assigned students
+      const { data: entries } = await supabase
+        .from("logbook_entries")
+        .select("id, entry_date, activity_description, student_id")
+        .in("student_id", studentIds)
+        .eq("status", "pending")
+        .order("entry_date", { ascending: false })
+        .limit(5);
+
+      if (entries) {
+        const mappedEntries = entries.map((entry) => ({
+          id: entry.id,
+          entry_date: entry.entry_date,
+          activity_description: entry.activity_description,
+          student_id: entry.student_id,
+          student_name: profileMap.get(entry.student_id)?.full_name || "Unknown",
+        }));
+        setPendingEntries(mappedEntries);
       }
+
+      // Step 5: Get total pending and approved counts
+      const { count: pendingCount } = await supabase
+        .from("logbook_entries")
+        .select("*", { count: "exact", head: true })
+        .in("student_id", studentIds)
+        .eq("status", "pending");
+
+      const { count: approvedCount } = await supabase
+        .from("logbook_entries")
+        .select("*", { count: "exact", head: true })
+        .in("student_id", studentIds)
+        .eq("status", "approved");
+
+      setStats((prev) => ({
+        ...prev,
+        totalPendingReviews: pendingCount || 0,
+        totalApproved: approvedCount || 0,
+      }));
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

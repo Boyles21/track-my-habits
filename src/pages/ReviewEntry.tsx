@@ -79,14 +79,10 @@ export default function ReviewEntry() {
 
   const fetchEntry = async () => {
     try {
+      // Step 1: Fetch the entry
       const { data: entryData } = await supabase
         .from("logbook_entries")
-        .select(`
-          *,
-          profiles!logbook_entries_student_id_fkey (
-            full_name
-          )
-        `)
+        .select("*")
         .eq("id", id)
         .maybeSingle();
 
@@ -95,6 +91,27 @@ export default function ReviewEntry() {
         navigate("/reviews");
         return;
       }
+
+      // Step 2: Verify this entry belongs to an assigned student
+      const { data: assignment } = await supabase
+        .from("supervisor_students")
+        .select("student_id")
+        .eq("supervisor_id", user?.id)
+        .eq("student_id", entryData.student_id)
+        .maybeSingle();
+
+      if (!assignment) {
+        toast.error("You don't have permission to view this entry");
+        navigate("/reviews");
+        return;
+      }
+
+      // Step 3: Fetch student profile
+      const { data: studentProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", entryData.student_id)
+        .maybeSingle();
 
       setEntry({
         id: entryData.id,
@@ -105,27 +122,31 @@ export default function ReviewEntry() {
         challenges: entryData.challenges,
         status: entryData.status,
         student_id: entryData.student_id,
-        student_name: (entryData.profiles as any)?.full_name || "Unknown",
+        student_name: studentProfile?.full_name || "Unknown",
       });
 
-      // Fetch comments
+      // Step 4: Fetch comments
       const { data: commentsData } = await supabase
         .from("comments")
-        .select(`
-          *,
-          profiles!comments_supervisor_id_fkey (
-            full_name
-          )
-        `)
+        .select("*")
         .eq("entry_id", id)
         .order("created_at", { ascending: true });
 
-      if (commentsData) {
+      if (commentsData && commentsData.length > 0) {
+        // Fetch supervisor profiles for comments
+        const supervisorIds = [...new Set(commentsData.map((c) => c.supervisor_id))];
+        const { data: supervisorProfiles } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", supervisorIds);
+
+        const supervisorMap = new Map(supervisorProfiles?.map((p) => [p.id, p.full_name]) || []);
+
         const mappedComments = commentsData.map((c) => ({
           id: c.id,
           content: c.content,
           created_at: c.created_at,
-          supervisor_name: (c.profiles as any)?.full_name || "Supervisor",
+          supervisor_name: supervisorMap.get(c.supervisor_id) || "Supervisor",
         }));
         setComments(mappedComments);
       }
@@ -175,15 +196,17 @@ export default function ReviewEntry() {
           supervisor_id: user.id,
           content: data.content,
         })
-        .select(`
-          *,
-          profiles!comments_supervisor_id_fkey (
-            full_name
-          )
-        `)
+        .select("*")
         .single();
 
       if (error) throw error;
+
+      // Fetch the supervisor name
+      const { data: supervisorProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
 
       setComments([
         ...comments,
@@ -191,7 +214,7 @@ export default function ReviewEntry() {
           id: newComment.id,
           content: newComment.content,
           created_at: newComment.created_at,
-          supervisor_name: (newComment.profiles as any)?.full_name || "Supervisor",
+          supervisor_name: supervisorProfile?.full_name || "Supervisor",
         },
       ]);
       form.reset();
