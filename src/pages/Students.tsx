@@ -46,68 +46,88 @@ export default function Students() {
 
   const fetchStudents = async () => {
     try {
-      const { data: assignments } = await supabase
+      // Step 1: Get assigned student IDs
+      const { data: assignments, error: assignmentError } = await supabase
         .from("supervisor_students")
-        .select(`
-          student_id,
-          profiles!supervisor_students_student_id_fkey (
-            id,
-            full_name,
-            email,
-            institution,
-            department,
-            programme
-          )
-        `)
+        .select("student_id")
         .eq("supervisor_id", user?.id);
 
-      if (assignments) {
-        const studentsWithStats = await Promise.all(
-          assignments.map(async (assignment) => {
-            const studentProfile = assignment.profiles as any;
-
-            // Fetch entry stats
-            const { count: totalEntries } = await supabase
-              .from("logbook_entries")
-              .select("*", { count: "exact", head: true })
-              .eq("student_id", assignment.student_id);
-
-            const { count: pendingEntries } = await supabase
-              .from("logbook_entries")
-              .select("*", { count: "exact", head: true })
-              .eq("student_id", assignment.student_id)
-              .eq("status", "pending");
-
-            const { count: approvedEntries } = await supabase
-              .from("logbook_entries")
-              .select("*", { count: "exact", head: true })
-              .eq("student_id", assignment.student_id)
-              .eq("status", "approved");
-
-            const { count: totalDocuments } = await supabase
-              .from("documents")
-              .select("*", { count: "exact", head: true })
-              .eq("user_id", assignment.student_id);
-
-            return {
-              id: assignment.student_id,
-              full_name: studentProfile?.full_name || "Unknown",
-              email: studentProfile?.email || "",
-              institution: studentProfile?.institution,
-              department: studentProfile?.department,
-              programme: studentProfile?.programme,
-              stats: {
-                totalEntries: totalEntries || 0,
-                pendingEntries: pendingEntries || 0,
-                approvedEntries: approvedEntries || 0,
-                totalDocuments: totalDocuments || 0,
-              },
-            };
-          })
-        );
-
-        setStudents(studentsWithStats);
+      if (assignmentError) {
+        console.error("Error fetching assignments:", assignmentError);
+        setLoading(false);
+        return;
       }
+
+      if (!assignments || assignments.length === 0) {
+        setStudents([]);
+        setLoading(false);
+        return;
+      }
+
+      const studentIds = assignments.map((a) => a.student_id);
+
+      // Step 2: Fetch profiles for assigned students
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, institution, department, programme")
+        .in("id", studentIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        setLoading(false);
+        return;
+      }
+
+      if (!profiles) {
+        setStudents([]);
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Get stats for each student
+      const studentsWithStats = await Promise.all(
+        profiles.map(async (profile) => {
+          // Fetch entry stats
+          const { count: totalEntries } = await supabase
+            .from("logbook_entries")
+            .select("*", { count: "exact", head: true })
+            .eq("student_id", profile.id);
+
+          const { count: pendingEntries } = await supabase
+            .from("logbook_entries")
+            .select("*", { count: "exact", head: true })
+            .eq("student_id", profile.id)
+            .eq("status", "pending");
+
+          const { count: approvedEntries } = await supabase
+            .from("logbook_entries")
+            .select("*", { count: "exact", head: true })
+            .eq("student_id", profile.id)
+            .eq("status", "approved");
+
+          const { count: totalDocuments } = await supabase
+            .from("documents")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", profile.id);
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name || "Unknown",
+            email: profile.email || "",
+            institution: profile.institution,
+            department: profile.department,
+            programme: profile.programme,
+            stats: {
+              totalEntries: totalEntries || 0,
+              pendingEntries: pendingEntries || 0,
+              approvedEntries: approvedEntries || 0,
+              totalDocuments: totalDocuments || 0,
+            },
+          };
+        })
+      );
+
+      setStudents(studentsWithStats);
     } catch (error) {
       console.error("Error fetching students:", error);
     } finally {

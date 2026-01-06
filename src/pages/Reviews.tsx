@@ -44,44 +44,64 @@ export default function Reviews() {
 
   const fetchEntries = async () => {
     try {
-      // Get assigned student IDs
-      const { data: assignments } = await supabase
+      // Step 1: Get assigned student IDs
+      const { data: assignments, error: assignmentError } = await supabase
         .from("supervisor_students")
         .select("student_id")
         .eq("supervisor_id", user?.id);
 
+      if (assignmentError) {
+        console.error("Error fetching assignments:", assignmentError);
+        setLoading(false);
+        return;
+      }
+
       if (!assignments || assignments.length === 0) {
+        setEntries([]);
         setLoading(false);
         return;
       }
 
       const studentIds = assignments.map((a) => a.student_id);
 
-      // Fetch entries from assigned students
-      const { data: entriesData } = await supabase
+      // Step 2: Fetch entries from assigned students
+      const { data: entriesData, error: entriesError } = await supabase
         .from("logbook_entries")
-        .select(`
-          *,
-          profiles!logbook_entries_student_id_fkey (
-            full_name
-          )
-        `)
+        .select("*")
         .in("student_id", studentIds)
         .order("entry_date", { ascending: false });
 
-      if (entriesData) {
-        const mappedEntries = entriesData.map((entry) => ({
-          id: entry.id,
-          entry_date: entry.entry_date,
-          activity_description: entry.activity_description,
-          skills_learned: entry.skills_learned,
-          hours_worked: entry.hours_worked || 8,
-          status: entry.status,
-          student_id: entry.student_id,
-          student_name: (entry.profiles as any)?.full_name || "Unknown",
-        }));
-        setEntries(mappedEntries);
+      if (entriesError) {
+        console.error("Error fetching entries:", entriesError);
+        setLoading(false);
+        return;
       }
+
+      if (!entriesData || entriesData.length === 0) {
+        setEntries([]);
+        setLoading(false);
+        return;
+      }
+
+      // Step 3: Fetch profiles for all students in entries
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", studentIds);
+
+      const profileMap = new Map(profiles?.map((p) => [p.id, p.full_name]) || []);
+
+      const mappedEntries = entriesData.map((entry) => ({
+        id: entry.id,
+        entry_date: entry.entry_date,
+        activity_description: entry.activity_description,
+        skills_learned: entry.skills_learned,
+        hours_worked: entry.hours_worked || 8,
+        status: entry.status,
+        student_id: entry.student_id,
+        student_name: profileMap.get(entry.student_id) || "Unknown",
+      }));
+      setEntries(mappedEntries);
     } catch (error) {
       console.error("Error fetching entries:", error);
     } finally {
