@@ -11,6 +11,7 @@ import Logbook from "./pages/Logbook";
 import LogbookEntry from "./pages/LogbookEntry";
 import Documents from "./pages/Documents";
 import Students from "./pages/Students";
+import StudentDetail from "./pages/StudentDetail";
 import Reviews from "./pages/Reviews";
 import ReviewEntry from "./pages/ReviewEntry";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/logbook/:id/edit" element={<LogbookEntry />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/students" element={<Students />} />
+            <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/reviews/:id" element={<ReviewEntry />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
