@@ -39,6 +39,7 @@ export default function LogbookEntry() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditing);
+  const [isLocked, setIsLocked] = useState(false);
 
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entrySchema),
@@ -79,6 +80,14 @@ export default function LogbookEntry() {
         return;
       }
 
+      // Check if entry is locked (approved entries cannot be edited)
+      if (data.status === "approved") {
+        setIsLocked(true);
+        toast.error("This entry has been approved and cannot be edited");
+        navigate("/logbook");
+        return;
+      }
+
       form.reset({
         entry_date: data.entry_date,
         activity_description: data.activity_description,
@@ -101,6 +110,20 @@ export default function LogbookEntry() {
     setIsLoading(true);
     try {
       if (isEditing) {
+        // Double-check entry is not approved before updating
+        const { data: currentEntry } = await supabase
+          .from("logbook_entries")
+          .select("status")
+          .eq("id", id)
+          .eq("student_id", user.id)
+          .maybeSingle();
+
+        if (currentEntry?.status === "approved") {
+          toast.error("This entry has been approved and cannot be edited");
+          navigate("/logbook");
+          return;
+        }
+
         const { error } = await supabase
           .from("logbook_entries")
           .update({
@@ -109,12 +132,13 @@ export default function LogbookEntry() {
             skills_learned: data.skills_learned || null,
             hours_worked: data.hours_worked,
             challenges: data.challenges || null,
+            status: "pending", // Reset to pending when resubmitting
           })
           .eq("id", id)
           .eq("student_id", user.id);
 
         if (error) throw error;
-        toast.success("Entry updated successfully");
+        toast.success("Entry updated and resubmitted for review");
       } else {
         const { error } = await supabase.from("logbook_entries").insert({
           student_id: user.id,

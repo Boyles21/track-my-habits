@@ -41,7 +41,7 @@ interface Comment {
 }
 
 const commentSchema = z.object({
-  content: z.string().min(1, "Please enter your feedback"),
+  content: z.string().min(5, "Feedback must be at least 5 characters"),
 });
 
 type CommentFormValues = z.infer<typeof commentSchema>;
@@ -158,27 +158,78 @@ export default function ReviewEntry() {
     }
   };
 
-  const handleStatusChange = async (newStatus: "approved" | "revision_needed") => {
+  const handleApprove = async () => {
     if (!entry || !user) return;
 
     setSubmitting(true);
     try {
       const { error } = await supabase
         .from("logbook_entries")
-        .update({ status: newStatus })
+        .update({ 
+          status: "approved",
+          approved_at: new Date().toISOString(),
+          approved_by: user.id,
+        })
         .eq("id", entry.id);
 
       if (error) throw error;
 
-      setEntry({ ...entry, status: newStatus });
-      toast.success(
-        newStatus === "approved"
-          ? "Entry approved successfully"
-          : "Entry marked for revision"
-      );
+      setEntry({ ...entry, status: "approved" });
+      toast.success("Entry approved successfully");
     } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
+      console.error("Error approving entry:", error);
+      toast.error("Failed to approve entry");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReject = async (comment: string) => {
+    if (!entry || !user) return;
+
+    setSubmitting(true);
+    try {
+      // First add the mandatory comment
+      const { error: commentError } = await supabase
+        .from("comments")
+        .insert({
+          entry_id: entry.id,
+          supervisor_id: user.id,
+          content: comment,
+        });
+
+      if (commentError) throw commentError;
+
+      // Then update the status
+      const { error } = await supabase
+        .from("logbook_entries")
+        .update({ status: "revision_needed" })
+        .eq("id", entry.id);
+
+      if (error) throw error;
+
+      // Fetch supervisor profile for the new comment
+      const { data: supervisorProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      setComments([
+        ...comments,
+        {
+          id: crypto.randomUUID(),
+          content: comment,
+          created_at: new Date().toISOString(),
+          supervisor_name: supervisorProfile?.full_name || "Supervisor",
+        },
+      ]);
+
+      setEntry({ ...entry, status: "revision_needed" });
+      toast.success("Entry marked for revision");
+    } catch (error) {
+      console.error("Error rejecting entry:", error);
+      toast.error("Failed to reject entry");
     } finally {
       setSubmitting(false);
     }
@@ -328,25 +379,60 @@ export default function ReviewEntry() {
         {/* Action Buttons */}
         {entry.status === "pending" && (
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Review Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex gap-4">
                 <Button
                   className="flex-1"
-                  onClick={() => handleStatusChange("approved")}
+                  onClick={handleApprove}
                   disabled={submitting}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve
+                  Approve Entry
                 </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => handleStatusChange("revision_needed")}
-                  disabled={submitting}
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Request Revision
-                </Button>
+              </div>
+              
+              {/* Rejection with mandatory comment */}
+              <div className="border-t pt-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  To request revision, provide feedback explaining what needs to be changed:
+                </p>
+                <Form {...form}>
+                  <form 
+                    onSubmit={form.handleSubmit((data) => handleReject(data.content))} 
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Revision Feedback (Required)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Explain what needs to be revised..."
+                              className="min-h-[80px]"
+                              {...field}
+                              disabled={submitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button 
+                      type="submit" 
+                      variant="outline" 
+                      disabled={submitting}
+                      className="w-full"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Request Revision
+                    </Button>
+                  </form>
+                </Form>
               </div>
             </CardContent>
           </Card>
@@ -358,8 +444,8 @@ export default function ReviewEntry() {
             <CardTitle className="text-lg">Feedback & Comments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {comments.length > 0 && (
-              <div className="space-y-4 mb-6">
+            {comments.length > 0 ? (
+              <div className="space-y-4">
                 {comments.map((comment) => (
                   <div
                     key={comment.id}
@@ -377,40 +463,49 @@ export default function ReviewEntry() {
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                No feedback has been provided yet.
+              </p>
             )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmitComment)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Add Feedback</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter your feedback or comments..."
-                          className="min-h-[100px]"
-                          {...field}
-                          disabled={submitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Add Comment"
-                  )}
-                </Button>
-              </form>
-            </Form>
+            {/* Allow adding additional comments for non-pending entries */}
+            {entry.status !== "pending" && (
+              <div className="border-t pt-4">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmitComment)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Add Additional Feedback</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter additional feedback or comments..."
+                              className="min-h-[80px]"
+                              {...field}
+                              disabled={submitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        "Add Comment"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

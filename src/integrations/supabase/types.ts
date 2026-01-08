@@ -79,6 +79,8 @@ export type Database = {
       logbook_entries: {
         Row: {
           activity_description: string
+          approved_at: string | null
+          approved_by: string | null
           challenges: string | null
           created_at: string
           entry_date: string
@@ -91,6 +93,8 @@ export type Database = {
         }
         Insert: {
           activity_description: string
+          approved_at?: string | null
+          approved_by?: string | null
           challenges?: string | null
           created_at?: string
           entry_date: string
@@ -103,6 +107,8 @@ export type Database = {
         }
         Update: {
           activity_description?: string
+          approved_at?: string | null
+          approved_by?: string | null
           challenges?: string | null
           created_at?: string
           entry_date?: string
@@ -150,6 +156,33 @@ export type Database = {
           id?: string
           institution?: string | null
           programme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      siwes_settings: {
+        Row: {
+          created_at: string
+          id: string
+          required_weeks: number
+          start_date: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          required_weeks?: number
+          start_date: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          required_weeks?: number
+          start_date?: string
+          student_id?: string
           updated_at?: string
         }
         Relationships: []

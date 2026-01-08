@@ -6,7 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, BookOpen, Calendar, Clock, Trash2, Edit } from "lucide-react";
+import { Plus, BookOpen, Calendar, Clock, Trash2, Edit, Lock } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -67,7 +67,13 @@ export default function Logbook() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, status: string) => {
+    // Prevent deletion of approved entries
+    if (status === "approved") {
+      toast.error("Approved entries cannot be deleted");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("logbook_entries")
@@ -82,6 +88,8 @@ export default function Logbook() {
       toast.error("Failed to delete entry");
     }
   };
+
+  const isEntryLocked = (status: string) => status === "approved";
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -196,36 +204,45 @@ export default function Logbook() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/logbook/${entry.id}/edit`}>
-                          <Edit className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                      {isEntryLocked(entry.status) ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Lock className="h-4 w-4" />
+                          <span>Locked</span>
+                        </div>
+                      ) : (
+                        <>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to={`/logbook/${entry.id}/edit`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Entry</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this entry? This action
-                              cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(entry.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Entry</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this entry? This action
+                                  cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(entry.id, entry.status)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>

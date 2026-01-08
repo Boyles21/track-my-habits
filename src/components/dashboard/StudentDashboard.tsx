@@ -13,6 +13,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Plus,
+  Calendar,
+  Target,
 } from "lucide-react";
 
 interface LogbookEntry {
@@ -21,14 +23,29 @@ interface LogbookEntry {
   activity_description: string;
   status: string;
   created_at: string;
+  hours_worked: number | null;
 }
 
 interface Stats {
   totalEntries: number;
   approvedEntries: number;
   pendingEntries: number;
+  revisionEntries: number;
   totalDocuments: number;
+  totalHours: number;
 }
+
+interface SiwesSettings {
+  start_date: string;
+  required_weeks: number;
+}
+
+// Constants for SIWES calculation
+const REQUIRED_WEEKS = 24;
+const HOURS_PER_DAY = 8;
+const DAYS_PER_WEEK = 5;
+const TOTAL_REQUIRED_HOURS = REQUIRED_WEEKS * DAYS_PER_WEEK * HOURS_PER_DAY; // 960 hours
+const TOTAL_REQUIRED_DAYS = REQUIRED_WEEKS * DAYS_PER_WEEK; // 120 days
 
 export default function StudentDashboard() {
   const { profile, user } = useAuth();
@@ -37,8 +54,11 @@ export default function StudentDashboard() {
     totalEntries: 0,
     approvedEntries: 0,
     pendingEntries: 0,
+    revisionEntries: 0,
     totalDocuments: 0,
+    totalHours: 0,
   });
+  const [siwesSettings, setSiwesSettings] = useState<SiwesSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,10 +69,10 @@ export default function StudentDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch recent entries
+      // Fetch recent entries with hours
       const { data: entries } = await supabase
         .from("logbook_entries")
-        .select("*")
+        .select("id, entry_date, activity_description, status, created_at, hours_worked")
         .eq("student_id", user?.id)
         .order("entry_date", { ascending: false })
         .limit(5);
@@ -61,34 +81,42 @@ export default function StudentDashboard() {
         setRecentEntries(entries);
       }
 
-      // Fetch stats
-      const { count: totalCount } = await supabase
+      // Fetch all entries for stats calculation
+      const { data: allEntries } = await supabase
         .from("logbook_entries")
-        .select("*", { count: "exact", head: true })
+        .select("hours_worked, status")
         .eq("student_id", user?.id);
 
-      const { count: approvedCount } = await supabase
-        .from("logbook_entries")
-        .select("*", { count: "exact", head: true })
-        .eq("student_id", user?.id)
-        .eq("status", "approved");
-
-      const { count: pendingCount } = await supabase
-        .from("logbook_entries")
-        .select("*", { count: "exact", head: true })
-        .eq("student_id", user?.id)
-        .eq("status", "pending");
+      // Calculate stats from all entries
+      const totalHours = (allEntries || []).reduce(
+        (sum, e) => sum + (e.hours_worked || 0),
+        0
+      );
+      const approvedCount = (allEntries || []).filter(e => e.status === "approved").length;
+      const pendingCount = (allEntries || []).filter(e => e.status === "pending").length;
+      const revisionCount = (allEntries || []).filter(e => e.status === "revision_needed").length;
 
       const { count: docsCount } = await supabase
         .from("documents")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user?.id);
 
+      // Fetch SIWES settings
+      const { data: settings } = await supabase
+        .from("siwes_settings")
+        .select("start_date, required_weeks")
+        .eq("student_id", user?.id)
+        .maybeSingle();
+
+      setSiwesSettings(settings);
+
       setStats({
-        totalEntries: totalCount || 0,
-        approvedEntries: approvedCount || 0,
-        pendingEntries: pendingCount || 0,
+        totalEntries: allEntries?.length || 0,
+        approvedEntries: approvedCount,
+        pendingEntries: pendingCount,
+        revisionEntries: revisionCount,
         totalDocuments: docsCount || 0,
+        totalHours,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -97,10 +125,16 @@ export default function StudentDashboard() {
     }
   };
 
-  const progressPercentage =
-    stats.totalEntries > 0
-      ? Math.round((stats.approvedEntries / stats.totalEntries) * 100)
-      : 0;
+  // Calculate progress percentages
+  const hoursProgress = Math.min(Math.round((stats.totalHours / TOTAL_REQUIRED_HOURS) * 100), 100);
+  const daysProgress = Math.min(Math.round((stats.totalEntries / TOTAL_REQUIRED_DAYS) * 100), 100);
+  const approvalProgress = stats.totalEntries > 0
+    ? Math.round((stats.approvedEntries / stats.totalEntries) * 100)
+    : 0;
+
+  // Calculate remaining
+  const remainingHours = Math.max(TOTAL_REQUIRED_HOURS - stats.totalHours, 0);
+  const remainingDays = Math.max(TOTAL_REQUIRED_DAYS - stats.totalEntries, 0);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -141,29 +175,70 @@ export default function StudentDashboard() {
         </Button>
       </div>
 
-      {/* Progress Card */}
+      {/* Overall Progress Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Internship Progress</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            SIWES Progress ({REQUIRED_WEEKS} Weeks Program)
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="space-y-6">
+          {/* Hours Progress */}
+          <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Entries Approved</span>
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                Total Hours Logged
+              </span>
+              <span className="font-medium">
+                {stats.totalHours} / {TOTAL_REQUIRED_HOURS} hrs
+              </span>
+            </div>
+            <Progress value={hoursProgress} className="h-3" />
+            <p className="text-sm text-muted-foreground">
+              {hoursProgress}% complete • {remainingHours} hours remaining
+            </p>
+          </div>
+
+          {/* Days Progress */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                Days Completed
+              </span>
+              <span className="font-medium">
+                {stats.totalEntries} / {TOTAL_REQUIRED_DAYS} days
+              </span>
+            </div>
+            <Progress value={daysProgress} className="h-3" />
+            <p className="text-sm text-muted-foreground">
+              {daysProgress}% complete • {remainingDays} days remaining
+            </p>
+          </div>
+
+          {/* Approval Rate */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                Entries Approved
+              </span>
               <span className="font-medium">
                 {stats.approvedEntries} / {stats.totalEntries}
               </span>
             </div>
-            <Progress value={progressPercentage} className="h-2" />
+            <Progress value={approvalProgress} className="h-3" />
             <p className="text-sm text-muted-foreground">
-              {progressPercentage}% of your logbook entries have been approved
+              {approvalProgress}% approval rate
             </p>
           </div>
         </CardContent>
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -209,6 +284,20 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-destructive/10">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.revisionEntries}</p>
+                <p className="text-sm text-muted-foreground">Needs Revision</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-secondary">
                 <FileText className="h-5 w-5 text-secondary-foreground" />
               </div>
@@ -246,14 +335,20 @@ export default function StudentDashboard() {
                   className="flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
                 >
                   <div className="space-y-1 flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">
-                      {new Date(entry.entry_date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-foreground">
+                        {new Date(entry.entry_date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                      {entry.hours_worked && (
+                        <span className="text-sm text-muted-foreground">
+                          • {entry.hours_worked}h
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {entry.activity_description}
                     </p>
