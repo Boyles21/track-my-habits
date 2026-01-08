@@ -20,6 +20,7 @@ import {
   Download,
   File,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface StudentProfile {
   id: string;
@@ -47,6 +48,13 @@ interface StudentStats {
   totalDocuments: number;
   totalHours: number;
 }
+
+// Constants for SIWES calculation
+const REQUIRED_WEEKS = 24;
+const HOURS_PER_DAY = 8;
+const DAYS_PER_WEEK = 5;
+const TOTAL_REQUIRED_HOURS = REQUIRED_WEEKS * DAYS_PER_WEEK * HOURS_PER_DAY;
+const TOTAL_REQUIRED_DAYS = REQUIRED_WEEKS * DAYS_PER_WEEK;
 
 interface Document {
   id: string;
@@ -323,63 +331,108 @@ export default function StudentDetail() {
 
         {/* Statistics */}
         {stats && (
-          <div className="grid gap-4 md:grid-cols-4">
+          <>
+            {/* Progress Overview */}
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <BookOpen className="h-6 w-6 text-primary" />
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  SIWES Progress Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-muted-foreground">Hours Logged</span>
+                      <span className="font-medium">{stats.totalHours} / {TOTAL_REQUIRED_HOURS} hrs</span>
+                    </div>
+                    <Progress value={Math.min((stats.totalHours / TOTAL_REQUIRED_HOURS) * 100, 100)} className="h-2" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalEntries}</p>
-                    <p className="text-sm text-muted-foreground">Total Entries</p>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-muted-foreground">Days Completed</span>
+                      <span className="font-medium">{stats.totalEntries} / {TOTAL_REQUIRED_DAYS} days</span>
+                    </div>
+                    <Progress value={Math.min((stats.totalEntries / TOTAL_REQUIRED_DAYS) * 100, 100)} className="h-2" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-yellow-500/10">
-                    <Clock className="h-6 w-6 text-yellow-600" />
+            {/* Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-5">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10">
+                      <BookOpen className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{stats.totalEntries}</p>
+                      <p className="text-sm text-muted-foreground">Total Entries</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stats.pendingEntries}</p>
-                    <p className="text-sm text-muted-foreground">Pending Review</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-green-500/10">
-                    <BookOpen className="h-6 w-6 text-green-600" />
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-yellow-500/10">
+                      <Clock className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{stats.pendingEntries}</p>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stats.approvedEntries}</p>
-                    <p className="text-sm text-muted-foreground">Approved</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-secondary">
-                    <FileText className="h-6 w-6 text-muted-foreground" />
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-green-500/10">
+                      <BookOpen className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{stats.approvedEntries}</p>
+                      <p className="text-sm text-muted-foreground">Approved</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalDocuments}</p>
-                    <p className="text-sm text-muted-foreground">Documents</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-destructive/10">
+                      <BookOpen className="h-6 w-6 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{stats.revisionEntries}</p>
+                      <p className="text-sm text-muted-foreground">Needs Revision</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-secondary">
+                      <FileText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{stats.totalDocuments}</p>
+                      <p className="text-sm text-muted-foreground">Documents</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
 
         {/* Documents */}
