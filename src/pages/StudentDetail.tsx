@@ -17,6 +17,8 @@ import {
   Calendar,
   Clock,
   FileText,
+  Download,
+  File,
 } from "lucide-react";
 
 interface StudentProfile {
@@ -46,12 +48,22 @@ interface StudentStats {
   totalHours: number;
 }
 
+interface Document {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number | null;
+  created_at: string;
+}
+
 export default function StudentDetail() {
   const { id } = useParams();
   const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [student, setStudent] = useState<StudentProfile | null>(null);
   const [entries, setEntries] = useState<LogbookEntry[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -110,7 +122,16 @@ export default function StudentDetail() {
 
       setEntries(entriesData || []);
 
-      // Step 4: Calculate stats
+      // Step 4: Fetch documents
+      const { data: documentsData } = await supabase
+        .from("documents")
+        .select("id, file_name, file_path, file_type, file_size, created_at")
+        .eq("user_id", id)
+        .order("created_at", { ascending: false });
+
+      setDocuments(documentsData || []);
+
+      // Step 5: Calculate stats
       const { count: totalEntries } = await supabase
         .from("logbook_entries")
         .select("*", { count: "exact", head: true })
@@ -169,6 +190,35 @@ export default function StudentDetail() {
       default:
         return <Badge className="status-pending">Pending</Badge>;
     }
+  };
+
+  const handleDownload = async (doc: Document) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("documents")
+        .download(doc.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download file");
+    }
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "Unknown size";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   if (authLoading || loading) {
@@ -331,6 +381,62 @@ export default function StudentDetail() {
             </Card>
           </div>
         )}
+
+        {/* Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {documents.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No documents uploaded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <File className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{doc.file_name}</p>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <Badge variant="outline">{doc.file_type}</Badge>
+                          <span>{formatFileSize(doc.file_size)}</span>
+                          <span>
+                            {new Date(doc.created_at).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                      className="ml-4"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Logbook Entries */}
         <Card>
