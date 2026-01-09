@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          actor_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -76,6 +112,75 @@ export type Database = {
         }
         Relationships: []
       }
+      entry_skills: {
+        Row: {
+          created_at: string
+          entry_id: string
+          id: string
+          rating: number | null
+          skill_id: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          id?: string
+          rating?: number | null
+          skill_id: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          id?: string
+          rating?: number | null
+          skill_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entry_skills_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "logbook_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entry_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutions: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       logbook_entries: {
         Row: {
           activity_description: string
@@ -121,6 +226,39 @@ export type Database = {
         }
         Relationships: []
       }
+      organizations: {
+        Row: {
+          address: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -131,6 +269,8 @@ export type Database = {
           full_name: string
           id: string
           institution: string | null
+          institution_id: string | null
+          organization_id: string | null
           programme: string | null
           updated_at: string
         }
@@ -143,6 +283,8 @@ export type Database = {
           full_name: string
           id: string
           institution?: string | null
+          institution_id?: string | null
+          organization_id?: string | null
           programme?: string | null
           updated_at?: string
         }
@@ -155,10 +297,27 @@ export type Database = {
           full_name?: string
           id?: string
           institution?: string | null
+          institution_id?: string | null
+          organization_id?: string | null
           programme?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       siwes_settings: {
         Row: {
@@ -184,6 +343,104 @@ export type Database = {
           start_date?: string
           student_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      student_placements: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          organization_id: string
+          start_date: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          organization_id: string
+          start_date?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          organization_id?: string
+          start_date?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_placements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_reassignments: {
+        Row: {
+          id: string
+          new_supervisor_id: string
+          previous_supervisor_id: string
+          reason: string
+          reassigned_at: string
+          reassigned_by: string
+          student_id: string
+        }
+        Insert: {
+          id?: string
+          new_supervisor_id: string
+          previous_supervisor_id: string
+          reason: string
+          reassigned_at?: string
+          reassigned_by: string
+          student_id: string
+        }
+        Update: {
+          id?: string
+          new_supervisor_id?: string
+          previous_supervisor_id?: string
+          reason?: string
+          reassigned_at?: string
+          reassigned_by?: string
+          student_id?: string
         }
         Relationships: []
       }
@@ -252,9 +509,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_audit_action: {
+        Args: {
+          _action_type: string
+          _metadata?: Json
+          _new_values?: Json
+          _old_values?: Json
+          _record_id?: string
+          _table_name?: string
+        }
+        Returns: string
+      }
+      reassign_supervisor: {
+        Args: {
+          _new_supervisor_id: string
+          _reason: string
+          _student_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      app_role: "student" | "supervisor"
+      app_role: "student" | "supervisor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -382,7 +658,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "supervisor"],
+      app_role: ["student", "supervisor", "admin"],
     },
   },
 } as const
