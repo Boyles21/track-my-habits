@@ -15,6 +15,14 @@ import StudentDetail from "./pages/StudentDetail";
 import Reviews from "./pages/Reviews";
 import ReviewEntry from "./pages/ReviewEntry";
 import NotFound from "./pages/NotFound";
+// Admin pages
+import Institutions from "./pages/admin/Institutions";
+import Organizations from "./pages/admin/Organizations";
+import Skills from "./pages/admin/Skills";
+import AuditLogs from "./pages/admin/AuditLogs";
+import AllStudents from "./pages/admin/AllStudents";
+import Supervisors from "./pages/admin/Supervisors";
+import Analytics from "./pages/admin/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +45,15 @@ const App = () => (
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/reviews/:id" element={<ReviewEntry />} />
+            {/* Admin routes */}
+            <Route path="/admin/students" element={<AllStudents />} />
+            <Route path="/admin/students/:id" element={<StudentDetail />} />
+            <Route path="/admin/supervisors" element={<Supervisors />} />
+            <Route path="/admin/institutions" element={<Institutions />} />
+            <Route path="/admin/organizations" element={<Organizations />} />
+            <Route path="/admin/skills" element={<Skills />} />
+            <Route path="/admin/analytics" element={<Analytics />} />
+            <Route path="/admin/audit-logs" element={<AuditLogs />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

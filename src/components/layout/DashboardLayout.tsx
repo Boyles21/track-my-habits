@@ -12,6 +12,11 @@ import {
   LogOut,
   Menu,
   X,
+  Building2,
+  Briefcase,
+  BarChart3,
+  ScrollText,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -42,7 +47,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: "/reviews", icon: MessageSquare, label: "Reviews" },
   ];
 
-  const navItems = role === "supervisor" ? supervisorNavItems : studentNavItems;
+  const adminNavItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/admin/students", icon: Users, label: "All Students" },
+    { href: "/admin/supervisors", icon: Shield, label: "Supervisors" },
+    { href: "/admin/institutions", icon: Building2, label: "Institutions" },
+    { href: "/admin/organizations", icon: Briefcase, label: "Organizations" },
+    { href: "/admin/skills", icon: ScrollText, label: "Skills" },
+    { href: "/admin/analytics", icon: BarChart3, label: "Analytics" },
+    { href: "/admin/audit-logs", icon: FileText, label: "Audit Logs" },
+  ];
+
+  const navItems = role === "admin" 
+    ? adminNavItems 
+    : role === "supervisor" 
+      ? supervisorNavItems 
+      : studentNavItems;
 
   return (
     <div className="min-h-screen bg-background">
