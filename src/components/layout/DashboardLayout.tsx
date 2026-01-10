@@ -17,6 +17,7 @@ import {
   BarChart3,
   ScrollText,
   Shield,
+  ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/logbook", icon: BookOpen, label: "Logbook" },
     { href: "/documents", icon: FileText, label: "Documents" },
+    { href: "/report", icon: ClipboardList, label: "Final Report" },
   ];
 
   const supervisorNavItems = [

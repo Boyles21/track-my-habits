@@ -15,6 +15,7 @@ import StudentDetail from "./pages/StudentDetail";
 import Reviews from "./pages/Reviews";
 import ReviewEntry from "./pages/ReviewEntry";
 import NotFound from "./pages/NotFound";
+import FinalReport from "./pages/FinalReport";
 // Admin pages
 import Institutions from "./pages/admin/Institutions";
 import Organizations from "./pages/admin/Organizations";
@@ -45,6 +46,8 @@ const App = () => (
             <Route path="/students/:id" element={<StudentDetail />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/reviews/:id" element={<ReviewEntry />} />
+            <Route path="/report" element={<FinalReport />} />
+            <Route path="/report/:id" element={<FinalReport />} />
             {/* Admin routes */}
             <Route path="/admin/students" element={<AllStudents />} />
             <Route path="/admin/students/:id" element={<StudentDetail />} />
