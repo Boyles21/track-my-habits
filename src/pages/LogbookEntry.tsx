@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,9 +18,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import SkillPicker from "@/components/logbook/SkillPicker";
 
 const entrySchema = z.object({
   entry_date: z.string().min(1, "Date is required"),
@@ -40,6 +42,7 @@ export default function LogbookEntry() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditing);
   const [isLocked, setIsLocked] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entrySchema),
@@ -95,6 +98,16 @@ export default function LogbookEntry() {
         hours_worked: data.hours_worked || 8,
         challenges: data.challenges || "",
       });
+
+      // Fetch existing entry skills
+      const { data: entrySkills } = await supabase
+        .from("entry_skills")
+        .select("skill_id")
+        .eq("entry_id", id);
+
+      if (entrySkills) {
+        setSelectedSkills(entrySkills.map((es) => es.skill_id));
+      }
     } catch (error) {
       console.error("Error fetching entry:", error);
       toast.error("Failed to load entry");
@@ -109,6 +122,8 @@ export default function LogbookEntry() {
 
     setIsLoading(true);
     try {
+      let entryId = id;
+
       if (isEditing) {
         // Double-check entry is not approved before updating
         const { data: currentEntry } = await supabase
@@ -138,18 +153,45 @@ export default function LogbookEntry() {
           .eq("student_id", user.id);
 
         if (error) throw error;
+
+        // Update entry skills - delete old ones and insert new ones
+        await supabase.from("entry_skills").delete().eq("entry_id", id);
+        
+        if (selectedSkills.length > 0) {
+          const skillInserts = selectedSkills.map((skillId) => ({
+            entry_id: id as string,
+            skill_id: skillId,
+          }));
+          await supabase.from("entry_skills").insert(skillInserts);
+        }
+
         toast.success("Entry updated and resubmitted for review");
       } else {
-        const { error } = await supabase.from("logbook_entries").insert({
-          student_id: user.id,
-          entry_date: data.entry_date,
-          activity_description: data.activity_description,
-          skills_learned: data.skills_learned || null,
-          hours_worked: data.hours_worked,
-          challenges: data.challenges || null,
-        });
+        const { data: newEntry, error } = await supabase
+          .from("logbook_entries")
+          .insert({
+            student_id: user.id,
+            entry_date: data.entry_date,
+            activity_description: data.activity_description,
+            skills_learned: data.skills_learned || null,
+            hours_worked: data.hours_worked,
+            challenges: data.challenges || null,
+          })
+          .select("id")
+          .single();
 
         if (error) throw error;
+        entryId = newEntry.id;
+
+        // Insert entry skills
+        if (selectedSkills.length > 0) {
+          const skillInserts = selectedSkills.map((skillId) => ({
+            entry_id: entryId as string,
+            skill_id: skillId,
+          }));
+          await supabase.from("entry_skills").insert(skillInserts);
+        }
+
         toast.success("Entry created successfully");
       }
       navigate("/logbook");
@@ -231,15 +273,28 @@ export default function LogbookEntry() {
                   )}
                 />
 
+                {/* Skill Picker */}
+                <FormItem>
+                  <FormLabel>Skills Gained</FormLabel>
+                  <FormDescription>
+                    Select the skills you applied or learned today
+                  </FormDescription>
+                  <SkillPicker
+                    selectedSkills={selectedSkills}
+                    onSkillsChange={setSelectedSkills}
+                    disabled={isLoading}
+                  />
+                </FormItem>
+
                 <FormField
                   control={form.control}
                   name="skills_learned"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Skills Learned (optional)</FormLabel>
+                      <FormLabel>Additional Notes on Skills (optional)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="What new skills did you learn or improve?"
+                          placeholder="Describe in more detail what you learned or how you applied these skills..."
                           className="min-h-[80px]"
                           {...field}
                           disabled={isLoading}

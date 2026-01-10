@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StudentDashboard from "@/components/dashboard/StudentDashboard";
 import SupervisorDashboard from "@/components/dashboard/SupervisorDashboard";
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
 
 export default function Dashboard() {
   const { user, role, loading } = useAuth();
@@ -25,9 +26,20 @@ export default function Dashboard() {
     );
   }
 
+  const renderDashboard = () => {
+    switch (role) {
+      case "admin":
+        return <AdminDashboard />;
+      case "supervisor":
+        return <SupervisorDashboard />;
+      default:
+        return <StudentDashboard />;
+    }
+  };
+
   return (
     <DashboardLayout>
-      {role === "supervisor" ? <SupervisorDashboard /> : <StudentDashboard />}
+      {renderDashboard()}
     </DashboardLayout>
   );
 }

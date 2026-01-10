@@ -19,7 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award } from "lucide-react";
+import SkillValidation from "@/components/logbook/SkillValidation";
 
 interface Entry {
   id: string;
@@ -373,6 +374,23 @@ export default function ReviewEntry() {
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Skills Validation Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              Skills & Competencies
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SkillValidation
+              entryId={entry.id}
+              supervisorId={user?.id || ""}
+              isEntryApproved={entry.status === "approved"}
+            />
           </CardContent>
         </Card>
 
