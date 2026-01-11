@@ -492,6 +492,7 @@ export type Database = {
         Args: { _student_id: string; _supervisor_id: string }
         Returns: undefined
       }
+      demote_from_admin: { Args: { _user_id: string }; Returns: undefined }
       get_supervisors: {
         Args: never
         Returns: {
@@ -520,6 +521,7 @@ export type Database = {
         }
         Returns: string
       }
+      promote_to_admin: { Args: { _user_id: string }; Returns: undefined }
       reassign_supervisor: {
         Args: {
           _new_supervisor_id: string
