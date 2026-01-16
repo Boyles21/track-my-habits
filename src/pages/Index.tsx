@@ -15,6 +15,7 @@ import {
   Clock,
   TrendingUp
 } from "lucide-react";
+import heroDashboard from "@/assets/hero-dashboard.png";
 
 const Index = () => {
   return (
@@ -37,32 +38,51 @@ const Index = () => {
           </div>
         </nav>
         
-        <div className="container mx-auto px-6 py-20 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm">
-            <GraduationCap className="h-4 w-4" />
-            <span>SIWES Management Platform</span>
+        <div className="container mx-auto px-6 py-16 lg:py-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            {/* Hero Text */}
+            <div className="text-center lg:text-left">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm">
+                <GraduationCap className="h-4 w-4" />
+                <span>SIWES Management Platform</span>
+              </div>
+              <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-5xl xl:text-6xl">
+                A Smart SIWES Monitoring and Internship Logbook System
+              </h2>
+              <p className="mb-8 max-w-xl text-lg text-primary-foreground/80 md:text-xl lg:mx-0 mx-auto">
+                TrackMySIWES is a centralized digital platform for managing SIWES logbooks, supervision, attendance, and progress tracking for students and supervisors.
+              </p>
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+                <Link to="/auth">
+                  <Button size="lg" variant="secondary" className="gap-2">
+                    Get Started <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
+                    Login to Account
+                  </Button>
+                </Link>
+              </div>
+              <p className="mt-6 text-sm text-primary-foreground/60">
+                Built to support structured SIWES supervision and academic assessment.
+              </p>
+            </div>
+            
+            {/* Hero Dashboard Image */}
+            <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
+              <div className="relative rounded-xl bg-white/5 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm">
+                <img
+                  src={heroDashboard}
+                  alt="TrackMySIWES Dashboard showing progress tracking, logbook entries, and attendance analytics"
+                  className="rounded-lg shadow-lg w-full"
+                />
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-secondary/20 blur-2xl" />
+              <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-primary-foreground/10 blur-2xl" />
+            </div>
           </div>
-          <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-6xl">
-            A Smart SIWES Monitoring and Internship Logbook System
-          </h2>
-          <p className="mx-auto mb-8 max-w-3xl text-lg text-primary-foreground/80 md:text-xl">
-            TrackMySIWES is a centralized digital platform for managing SIWES logbooks, supervision, attendance, and progress tracking for students and supervisors.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link to="/auth">
-              <Button size="lg" variant="secondary" className="gap-2">
-                Get Started <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
-                Login to Account
-              </Button>
-            </Link>
-          </div>
-          <p className="mt-6 text-sm text-primary-foreground/60">
-            Built to support structured SIWES supervision and academic assessment.
-          </p>
         </div>
       </header>
 
