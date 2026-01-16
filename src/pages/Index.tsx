@@ -23,6 +23,9 @@ import featureLogbookImg from "@/assets/feature-logbook.png";
 import featureApprovalImg from "@/assets/feature-approval.png";
 import featureProgressImg from "@/assets/feature-progress.png";
 import featureDocumentsImg from "@/assets/feature-documents.png";
+import mockupDashboard from "@/assets/mockup-dashboard.png";
+import mockupLogbook from "@/assets/mockup-logbook.png";
+import mockupReview from "@/assets/mockup-review.png";
 
 const Index = () => {
   return (
@@ -182,6 +185,48 @@ const Index = () => {
               description="Upload and manage placement letters, reports, and certificates securely."
               image={featureDocumentsImg}
               accentColor="from-purple-500/20 to-purple-600/10"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* See It In Action Section */}
+      <section className="container mx-auto px-6 py-24">
+        <div className="mb-4 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+            <BookOpen className="h-4 w-4" />
+            Product Preview
+          </span>
+        </div>
+        <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
+          See TrackMySIWES in Action
+        </h3>
+        <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
+          Explore the intuitive interfaces designed for students, supervisors, and administrators.
+        </p>
+        
+        <div className="grid gap-8 lg:grid-cols-12">
+          {/* Large Dashboard Mockup */}
+          <div className="lg:col-span-7">
+            <MockupCard
+              image={mockupDashboard}
+              title="Student Dashboard"
+              caption="Track your SIWES progress with real-time analytics, hours logged, and activity overview at a glance."
+              featured
+            />
+          </div>
+          
+          {/* Stacked Right Column */}
+          <div className="flex flex-col gap-8 lg:col-span-5">
+            <MockupCard
+              image={mockupLogbook}
+              title="Logbook Entry Form"
+              caption="Record daily activities, skills learned, and challenges with an intuitive structured form."
+            />
+            <MockupCard
+              image={mockupReview}
+              title="Supervisor Review Panel"
+              caption="Review, approve, or request revisions on student submissions with detailed feedback tools."
             />
           </div>
         </div>
@@ -349,6 +394,40 @@ const ValuePoint = ({ icon, title, description }: ValuePointProps) => (
       <h4 className="font-semibold text-card-foreground">{title}</h4>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
+  </div>
+);
+
+interface MockupCardProps {
+  image: string;
+  title: string;
+  caption: string;
+  featured?: boolean;
+}
+
+const MockupCard = ({ image, title, caption, featured = false }: MockupCardProps) => (
+  <div className={`group relative overflow-hidden rounded-2xl border border-border bg-card shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 ${featured ? '' : ''}`}>
+    {/* Image Container */}
+    <div className={`relative overflow-hidden bg-gradient-to-br from-muted/50 to-muted ${featured ? 'aspect-[16/10]' : 'aspect-[16/9]'}`}>
+      <img 
+        src={image} 
+        alt={`${title} mockup`}
+        className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+      />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
+    </div>
+    
+    {/* Caption */}
+    <div className="relative p-6">
+      <div className="mb-2 flex items-center gap-2">
+        <div className="h-2 w-2 rounded-full bg-primary" />
+        <h4 className="font-semibold text-card-foreground">{title}</h4>
+      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">{caption}</p>
+    </div>
+    
+    {/* Decorative corner accent */}
+    <div className="absolute right-0 top-0 h-20 w-20 bg-gradient-to-bl from-primary/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
   </div>
 );
 
