@@ -16,6 +16,9 @@ import {
   TrendingUp
 } from "lucide-react";
 import heroDashboard from "@/assets/hero-dashboard.png";
+import userStudentsImg from "@/assets/user-students.png";
+import userSupervisorsImg from "@/assets/user-supervisors.png";
+import userInstitutionsImg from "@/assets/user-institutions.png";
 
 const Index = () => {
   return (
@@ -98,6 +101,7 @@ const Index = () => {
           <UserCard
             icon={<GraduationCap className="h-10 w-10" />}
             title="Students"
+            image={userStudentsImg}
             features={[
               "Log daily SIWES activities",
               "Track attendance and progress",
@@ -107,6 +111,7 @@ const Index = () => {
           <UserCard
             icon={<UserCheck className="h-10 w-10" />}
             title="Supervisors"
+            image={userSupervisorsImg}
             features={[
               "Review and approve logbooks",
               "Monitor assigned students",
@@ -116,6 +121,7 @@ const Index = () => {
           <UserCard
             icon={<Building2 className="h-10 w-10" />}
             title="Institutions / Coordinators"
+            image={userInstitutionsImg}
             features={[
               "Monitor SIWES participation",
               "Access progress analytics",
@@ -239,22 +245,34 @@ interface UserCardProps {
   icon: React.ReactNode;
   title: string;
   features: string[];
+  image?: string;
 }
 
-const UserCard = ({ icon, title, features }: UserCardProps) => (
-  <div className="rounded-xl border border-border bg-card p-8 text-center transition-all hover:shadow-lg hover:border-primary/20">
-    <div className="mb-6 inline-flex rounded-full bg-primary/10 p-4 text-primary">
-      {icon}
+const UserCard = ({ icon, title, features, image }: UserCardProps) => (
+  <div className="group rounded-xl border border-border bg-card overflow-hidden transition-all hover:shadow-lg hover:border-primary/20">
+    {image && (
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10">
+        <img 
+          src={image} 
+          alt={`${title} illustration`}
+          className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+    )}
+    <div className="p-8 text-center">
+      <div className="mb-4 inline-flex rounded-full bg-primary/10 p-4 text-primary">
+        {icon}
+      </div>
+      <h4 className="mb-4 text-xl font-semibold text-card-foreground">{title}</h4>
+      <ul className="space-y-3 text-left">
+        {features.map((feature, index) => (
+          <li key={index} className="flex items-start gap-3 text-sm text-muted-foreground">
+            <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
+            <span>{feature}</span>
+          </li>
+        ))}
+      </ul>
     </div>
-    <h4 className="mb-4 text-xl font-semibold text-card-foreground">{title}</h4>
-    <ul className="space-y-3 text-left">
-      {features.map((feature, index) => (
-        <li key={index} className="flex items-start gap-3 text-sm text-muted-foreground">
-          <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
-          <span>{feature}</span>
-        </li>
-      ))}
-    </ul>
   </div>
 );
 
