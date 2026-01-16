@@ -19,6 +19,10 @@ import heroDashboard from "@/assets/hero-dashboard.png";
 import userStudentsImg from "@/assets/user-students.png";
 import userSupervisorsImg from "@/assets/user-supervisors.png";
 import userInstitutionsImg from "@/assets/user-institutions.png";
+import featureLogbookImg from "@/assets/feature-logbook.png";
+import featureApprovalImg from "@/assets/feature-approval.png";
+import featureProgressImg from "@/assets/feature-progress.png";
+import featureDocumentsImg from "@/assets/feature-documents.png";
 
 const Index = () => {
   return (
@@ -132,34 +136,52 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="bg-muted/50">
-        <div className="container mx-auto px-6 py-20">
-          <h3 className="mb-4 text-center text-3xl font-bold text-foreground">
+      <section className="bg-muted/30 relative overflow-hidden">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.05),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--primary)/0.03),transparent_50%)]" />
+        
+        <div className="container relative mx-auto px-6 py-24">
+          <div className="mb-4 flex justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+              <TrendingUp className="h-4 w-4" />
+              Powerful Features
+            </span>
+          </div>
+          <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
             Core Features of TrackMySIWES
           </h3>
-          <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
+          <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
             Everything you need for effective SIWES management in one platform.
           </p>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             <FeatureCard
-              icon={<BookOpen className="h-8 w-8" />}
+              icon={<BookOpen className="h-7 w-7" />}
               title="Daily Logbook Entries"
               description="Students record daily SIWES activities and skills acquired with structured entry forms."
+              image={featureLogbookImg}
+              accentColor="from-blue-500/20 to-blue-600/10"
             />
             <FeatureCard
-              icon={<ClipboardCheck className="h-8 w-8" />}
+              icon={<ClipboardCheck className="h-7 w-7" />}
               title="Supervisor Review & Approval"
               description="Supervisors review, comment, and approve logbook submissions with ease."
+              image={featureApprovalImg}
+              accentColor="from-emerald-500/20 to-emerald-600/10"
             />
             <FeatureCard
-              icon={<Clock className="h-8 w-8" />}
+              icon={<Clock className="h-7 w-7" />}
               title="Progress & Attendance Tracking"
               description="Automatically track SIWES duration, hours, and completion status in real-time."
+              image={featureProgressImg}
+              accentColor="from-amber-500/20 to-amber-600/10"
             />
             <FeatureCard
-              icon={<FileText className="h-8 w-8" />}
+              icon={<FileText className="h-7 w-7" />}
               title="Document Management"
               description="Upload and manage placement letters, reports, and certificates securely."
+              image={featureDocumentsImg}
+              accentColor="from-purple-500/20 to-purple-600/10"
             />
           </div>
         </div>
@@ -280,15 +302,37 @@ interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
+  image?: string;
+  accentColor?: string;
 }
 
-const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
-  <div className="rounded-lg border border-border bg-card p-6 text-center transition-shadow hover:shadow-lg">
-    <div className="mb-4 inline-flex rounded-full bg-primary/10 p-3 text-primary">
-      {icon}
+const FeatureCard = ({ icon, title, description, image, accentColor = "from-primary/20 to-primary/10" }: FeatureCardProps) => (
+  <div className="group relative rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 hover:-translate-y-1">
+    {/* Image Section */}
+    {image && (
+      <div className={`relative h-40 overflow-hidden bg-gradient-to-br ${accentColor}`}>
+        <img 
+          src={image} 
+          alt={`${title} illustration`}
+          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+        />
+        {/* Gradient overlay for smooth transition */}
+        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-card to-transparent" />
+      </div>
+    )}
+    
+    {/* Content Section */}
+    <div className="relative p-6 text-center">
+      {/* Icon badge */}
+      <div className="mb-4 inline-flex rounded-xl bg-primary/10 p-3 text-primary shadow-sm ring-1 ring-primary/10 transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-md group-hover:shadow-primary/20">
+        {icon}
+      </div>
+      <h4 className="mb-3 text-lg font-semibold text-card-foreground">{title}</h4>
+      <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
     </div>
-    <h4 className="mb-2 text-lg font-semibold text-card-foreground">{title}</h4>
-    <p className="text-sm text-muted-foreground">{description}</p>
+    
+    {/* Hover glow effect */}
+    <div className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none ring-1 ring-primary/20" />
   </div>
 );
 
