@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -19,8 +20,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award, AlertTriangle, Ban } from "lucide-react";
 import SkillValidation from "@/components/logbook/SkillValidation";
+import { MAX_DAILY_HOURS, formatHours } from "@/lib/hours-validation";
 
 interface Entry {
   id: string;
@@ -32,6 +34,10 @@ interface Entry {
   status: string;
   student_id: string;
   student_name: string;
+  start_time: string | null;
+  end_time: string | null;
+  has_violation: boolean | null;
+  violation_type: string | null;
 }
 
 interface Comment {
@@ -124,6 +130,10 @@ export default function ReviewEntry() {
         status: entryData.status,
         student_id: entryData.student_id,
         student_name: studentProfile?.full_name || "Unknown",
+        start_time: entryData.start_time,
+        end_time: entryData.end_time,
+        has_violation: entryData.has_violation,
+        violation_type: entryData.violation_type,
       });
 
       // Step 4: Fetch comments
@@ -161,6 +171,12 @@ export default function ReviewEntry() {
 
   const handleApprove = async () => {
     if (!entry || !user) return;
+
+    // Prevent approval if entry has violations
+    if (entry.has_violation) {
+      toast.error("Cannot approve entry with hour violations. Student must correct the entry first.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -290,6 +306,11 @@ export default function ReviewEntry() {
     }
   };
 
+  const formatTime = (time: string | null) => {
+    if (!time) return "--:--";
+    return time.slice(0, 5);
+  };
+
   if (authLoading || loading) {
     return (
       <DashboardLayout>
@@ -313,6 +334,8 @@ export default function ReviewEntry() {
     );
   }
 
+  const hasViolation = entry.has_violation;
+
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto space-y-6">
@@ -327,13 +350,33 @@ export default function ReviewEntry() {
             <h1 className="text-2xl font-bold text-foreground">Review Entry</h1>
             <p className="text-muted-foreground">{entry.student_name}</p>
           </div>
-          {getStatusBadge(entry.status)}
+          <div className="flex items-center gap-2">
+            {hasViolation && entry.status !== "approved" && (
+              <Badge variant="destructive" className="flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Violation
+              </Badge>
+            )}
+            {getStatusBadge(entry.status)}
+          </div>
         </div>
 
+        {/* Violation Alert */}
+        {hasViolation && entry.status !== "approved" && (
+          <Alert variant="destructive">
+            <Ban className="h-4 w-4" />
+            <AlertTitle>Hours Violation Detected</AlertTitle>
+            <AlertDescription>
+              This entry logs {formatHours(entry.hours_worked)} which exceeds the maximum of {MAX_DAILY_HOURS} hours per day.
+              <strong className="block mt-1">This entry cannot be approved until the student corrects the hours.</strong>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Entry Details */}
-        <Card>
+        <Card className={hasViolation && entry.status !== "approved" ? "border-destructive/50" : ""}>
           <CardHeader>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 {new Date(entry.entry_date).toLocaleDateString("en-US", {
@@ -343,9 +386,16 @@ export default function ReviewEntry() {
                   day: "numeric",
                 })}
               </div>
-              <div className="flex items-center gap-1">
+              {entry.start_time && entry.end_time && (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
+                </div>
+              )}
+              <div className={`flex items-center gap-1 ${hasViolation ? 'text-destructive font-medium' : ''}`}>
                 <Clock className="h-4 w-4" />
-                {entry.hours_worked} hours
+                {formatHours(entry.hours_worked)}
+                {hasViolation && <span className="text-xs">(exceeds max {MAX_DAILY_HOURS}h)</span>}
               </div>
             </div>
           </CardHeader>
@@ -401,21 +451,35 @@ export default function ReviewEntry() {
               <CardTitle className="text-lg">Review Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  className="flex-1"
-                  onClick={handleApprove}
-                  disabled={submitting}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Entry
-                </Button>
-              </div>
+              {hasViolation ? (
+                <Alert variant="destructive">
+                  <Ban className="h-4 w-4" />
+                  <AlertTitle>Approval Blocked</AlertTitle>
+                  <AlertDescription>
+                    Cannot approve this entry due to hour violations. 
+                    The student must edit and correct the hours (max {MAX_DAILY_HOURS}h/day) before approval is possible.
+                    You may request revision with feedback below.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="flex gap-4">
+                  <Button
+                    className="flex-1"
+                    onClick={handleApprove}
+                    disabled={submitting}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve Entry
+                  </Button>
+                </div>
+              )}
               
               {/* Rejection with mandatory comment */}
               <div className="border-t pt-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  To request revision, provide feedback explaining what needs to be changed:
+                  {hasViolation 
+                    ? "Request the student to correct their entry hours:"
+                    : "To request revision, provide feedback explaining what needs to be changed:"}
                 </p>
                 <Form {...form}>
                   <form 
@@ -430,7 +494,9 @@ export default function ReviewEntry() {
                           <FormLabel>Revision Feedback (Required)</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Explain what needs to be revised..."
+                              placeholder={hasViolation 
+                                ? `Please correct your hours. Maximum allowed is ${MAX_DAILY_HOURS} hours per day...`
+                                : "Explain what needs to be revised..."}
                               className="min-h-[80px]"
                               {...field}
                               disabled={submitting}

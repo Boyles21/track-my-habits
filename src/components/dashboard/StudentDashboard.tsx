@@ -4,18 +4,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   FileText,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
   Plus,
-  Calendar,
-  Target,
+  AlertTriangle,
 } from "lucide-react";
+import HoursProgressCard from "./HoursProgressCard";
+import WeeklyHoursTable from "./WeeklyHoursTable";
+import { calculateWeeklyHours, MAX_DAILY_HOURS, WeeklyHoursSummary } from "@/lib/hours-validation";
 
 interface LogbookEntry {
   id: string;
@@ -24,6 +22,10 @@ interface LogbookEntry {
   status: string;
   created_at: string;
   hours_worked: number | null;
+  has_violation: boolean | null;
+  violation_type: string | null;
+  start_time: string | null;
+  end_time: string | null;
 }
 
 interface Stats {
@@ -33,23 +35,14 @@ interface Stats {
   revisionEntries: number;
   totalDocuments: number;
   totalHours: number;
+  dailyViolations: number;
+  weeklyViolations: number;
 }
-
-interface SiwesSettings {
-  start_date: string;
-  required_weeks: number;
-}
-
-// Constants for SIWES calculation
-const REQUIRED_WEEKS = 24;
-const HOURS_PER_DAY = 8;
-const DAYS_PER_WEEK = 5;
-const TOTAL_REQUIRED_HOURS = REQUIRED_WEEKS * DAYS_PER_WEEK * HOURS_PER_DAY; // 960 hours
-const TOTAL_REQUIRED_DAYS = REQUIRED_WEEKS * DAYS_PER_WEEK; // 120 days
 
 export default function StudentDashboard() {
   const { profile, user } = useAuth();
   const [recentEntries, setRecentEntries] = useState<LogbookEntry[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyHoursSummary[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalEntries: 0,
     approvedEntries: 0,
@@ -57,8 +50,9 @@ export default function StudentDashboard() {
     revisionEntries: 0,
     totalDocuments: 0,
     totalHours: 0,
+    dailyViolations: 0,
+    weeklyViolations: 0,
   });
-  const [siwesSettings, setSiwesSettings] = useState<SiwesSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,7 +66,7 @@ export default function StudentDashboard() {
       // Fetch recent entries with hours
       const { data: entries } = await supabase
         .from("logbook_entries")
-        .select("id, entry_date, activity_description, status, created_at, hours_worked")
+        .select("id, entry_date, activity_description, status, created_at, hours_worked, has_violation, violation_type, start_time, end_time")
         .eq("student_id", user?.id)
         .order("entry_date", { ascending: false })
         .limit(5);
@@ -84,31 +78,26 @@ export default function StudentDashboard() {
       // Fetch all entries for stats calculation
       const { data: allEntries } = await supabase
         .from("logbook_entries")
-        .select("hours_worked, status")
+        .select("hours_worked, status, entry_date, has_violation")
         .eq("student_id", user?.id);
 
       // Calculate stats from all entries
-      const totalHours = (allEntries || []).reduce(
-        (sum, e) => sum + (e.hours_worked || 0),
-        0
-      );
-      const approvedCount = (allEntries || []).filter(e => e.status === "approved").length;
+      const approvedEntries = allEntries?.filter(e => e.status === "approved") || [];
+      const totalHours = approvedEntries.reduce((sum, e) => sum + (e.hours_worked || 0), 0);
+      const approvedCount = approvedEntries.length;
       const pendingCount = (allEntries || []).filter(e => e.status === "pending").length;
       const revisionCount = (allEntries || []).filter(e => e.status === "revision_needed").length;
+      const dailyViolations = (allEntries || []).filter(e => e.has_violation && e.status !== "approved").length;
+
+      // Calculate weekly data
+      const weekly = calculateWeeklyHours(allEntries || []);
+      setWeeklyData(weekly);
+      const weeklyViolations = weekly.filter(w => w.hasViolation).length;
 
       const { count: docsCount } = await supabase
         .from("documents")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user?.id);
-
-      // Fetch SIWES settings
-      const { data: settings } = await supabase
-        .from("siwes_settings")
-        .select("start_date, required_weeks")
-        .eq("student_id", user?.id)
-        .maybeSingle();
-
-      setSiwesSettings(settings);
 
       setStats({
         totalEntries: allEntries?.length || 0,
@@ -117,6 +106,8 @@ export default function StudentDashboard() {
         revisionEntries: revisionCount,
         totalDocuments: docsCount || 0,
         totalHours,
+        dailyViolations,
+        weeklyViolations,
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -125,18 +116,15 @@ export default function StudentDashboard() {
     }
   };
 
-  // Calculate progress percentages
-  const hoursProgress = Math.min(Math.round((stats.totalHours / TOTAL_REQUIRED_HOURS) * 100), 100);
-  const daysProgress = Math.min(Math.round((stats.totalEntries / TOTAL_REQUIRED_DAYS) * 100), 100);
-  const approvalProgress = stats.totalEntries > 0
-    ? Math.round((stats.approvedEntries / stats.totalEntries) * 100)
-    : 0;
-
-  // Calculate remaining
-  const remainingHours = Math.max(TOTAL_REQUIRED_HOURS - stats.totalHours, 0);
-  const remainingDays = Math.max(TOTAL_REQUIRED_DAYS - stats.totalEntries, 0);
-
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, hasViolation: boolean | null) => {
+    if (hasViolation && status === "pending") {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Violation
+        </Badge>
+      );
+    }
     switch (status) {
       case "approved":
         return <Badge className="status-approved">Approved</Badge>;
@@ -145,6 +133,11 @@ export default function StudentDashboard() {
       default:
         return <Badge className="status-pending">Pending</Badge>;
     }
+  };
+
+  const formatTime = (time: string | null) => {
+    if (!time) return "";
+    return time.slice(0, 5);
   };
 
   if (loading) {
@@ -175,70 +168,24 @@ export default function StudentDashboard() {
         </Button>
       </div>
 
-      {/* Overall Progress Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            SIWES Progress ({REQUIRED_WEEKS} Weeks Program)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Hours Progress */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Total Hours Logged
-              </span>
-              <span className="font-medium">
-                {stats.totalHours} / {TOTAL_REQUIRED_HOURS} hrs
-              </span>
-            </div>
-            <Progress value={hoursProgress} className="h-3" />
-            <p className="text-sm text-muted-foreground">
-              {hoursProgress}% complete • {remainingHours} hours remaining
-            </p>
-          </div>
+      {/* Hours Progress Card */}
+      <HoursProgressCard
+        totalHours={stats.totalHours}
+        totalEntries={stats.totalEntries}
+        approvedEntries={stats.approvedEntries}
+        pendingEntries={stats.pendingEntries}
+        revisionEntries={stats.revisionEntries}
+        dailyViolations={stats.dailyViolations}
+        weeklyViolations={stats.weeklyViolations}
+      />
 
-          {/* Days Progress */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Days Completed
-              </span>
-              <span className="font-medium">
-                {stats.totalEntries} / {TOTAL_REQUIRED_DAYS} days
-              </span>
-            </div>
-            <Progress value={daysProgress} className="h-3" />
-            <p className="text-sm text-muted-foreground">
-              {daysProgress}% complete • {remainingDays} days remaining
-            </p>
-          </div>
-
-          {/* Approval Rate */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4" />
-                Entries Approved
-              </span>
-              <span className="font-medium">
-                {stats.approvedEntries} / {stats.totalEntries}
-              </span>
-            </div>
-            <Progress value={approvalProgress} className="h-3" />
-            <p className="text-sm text-muted-foreground">
-              {approvalProgress}% approval rate
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Weekly Hours Summary */}
+      {weeklyData.length > 0 && (
+        <WeeklyHoursTable weeklyData={weeklyData} maxRows={4} />
+      )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -248,48 +195,6 @@ export default function StudentDashboard() {
               <div>
                 <p className="text-2xl font-bold">{stats.totalEntries}</p>
                 <p className="text-sm text-muted-foreground">Total Entries</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-success/10">
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.approvedEntries}</p>
-                <p className="text-sm text-muted-foreground">Approved</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-warning/10">
-                <Clock className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.pendingEntries}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.revisionEntries}</p>
-                <p className="text-sm text-muted-foreground">Needs Revision</p>
               </div>
             </div>
           </CardContent>
@@ -308,6 +213,38 @@ export default function StudentDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {stats.dailyViolations > 0 && (
+          <Card className="border-warning">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10">
+                  <AlertTriangle className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-warning">{stats.dailyViolations}</p>
+                  <p className="text-sm text-muted-foreground">Hour Violations</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {stats.weeklyViolations > 0 && (
+          <Card className="border-warning">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10">
+                  <AlertTriangle className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-warning">{stats.weeklyViolations}</p>
+                  <p className="text-sm text-muted-foreground">Low-Hour Weeks</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Recent Entries */}
@@ -332,7 +269,9 @@ export default function StudentDashboard() {
               {recentEntries.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors"
+                  className={`flex items-start justify-between p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors ${
+                    entry.has_violation ? 'border-warning/50' : ''
+                  }`}
                 >
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -343,8 +282,13 @@ export default function StudentDashboard() {
                           day: "numeric",
                         })}
                       </p>
-                      {entry.hours_worked && (
+                      {entry.start_time && entry.end_time && (
                         <span className="text-sm text-muted-foreground">
+                          {formatTime(entry.start_time)} - {formatTime(entry.end_time)}
+                        </span>
+                      )}
+                      {entry.hours_worked && (
+                        <span className={`text-sm ${entry.hours_worked > MAX_DAILY_HOURS ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                           • {entry.hours_worked}h
                         </span>
                       )}
@@ -353,7 +297,7 @@ export default function StudentDashboard() {
                       {entry.activity_description}
                     </p>
                   </div>
-                  <div className="ml-4">{getStatusBadge(entry.status)}</div>
+                  <div className="ml-4">{getStatusBadge(entry.status, entry.has_violation)}</div>
                 </div>
               ))}
             </div>
