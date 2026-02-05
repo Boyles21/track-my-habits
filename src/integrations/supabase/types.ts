@@ -188,13 +188,17 @@ export type Database = {
           approved_by: string | null
           challenges: string | null
           created_at: string
+          end_time: string | null
           entry_date: string
+          has_violation: boolean | null
           hours_worked: number | null
           id: string
           skills_learned: string | null
+          start_time: string | null
           status: string
           student_id: string
           updated_at: string
+          violation_type: string | null
         }
         Insert: {
           activity_description: string
@@ -202,13 +206,17 @@ export type Database = {
           approved_by?: string | null
           challenges?: string | null
           created_at?: string
+          end_time?: string | null
           entry_date: string
+          has_violation?: boolean | null
           hours_worked?: number | null
           id?: string
           skills_learned?: string | null
+          start_time?: string | null
           status?: string
           student_id: string
           updated_at?: string
+          violation_type?: string | null
         }
         Update: {
           activity_description?: string
@@ -216,13 +224,17 @@ export type Database = {
           approved_by?: string | null
           challenges?: string | null
           created_at?: string
+          end_time?: string | null
           entry_date?: string
+          has_violation?: boolean | null
           hours_worked?: number | null
           id?: string
           skills_learned?: string | null
+          start_time?: string | null
           status?: string
           student_id?: string
           updated_at?: string
+          violation_type?: string | null
         }
         Relationships: []
       }
