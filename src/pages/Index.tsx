@@ -31,34 +31,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        {/* Animated Background Layer */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Floating Gradient Orbs */}
-          <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-gradient-to-br from-primary-foreground/20 to-transparent blur-3xl animate-float opacity-60" />
-          <div className="absolute top-1/3 -right-32 h-80 w-80 rounded-full bg-gradient-to-bl from-secondary/30 to-transparent blur-3xl animate-float-delayed opacity-50" />
-          <div className="absolute -bottom-20 left-1/4 h-72 w-72 rounded-full bg-gradient-to-tr from-accent/20 to-transparent blur-3xl animate-pulse-glow opacity-40" />
-          <div className="absolute top-1/4 left-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-primary-foreground/10 to-transparent blur-2xl animate-particle-drift opacity-30" />
-          
-          {/* Animated Mesh Grid */}
-          <div 
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '60px 60px',
-            }}
-          />
-          
-          {/* Subtle rotating gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-primary-foreground/5 to-transparent animate-rotate-slow opacity-20" 
-            style={{ transformOrigin: 'center center' }}
-          />
-        </div>
-
-        <nav className="container relative z-10 mx-auto flex items-center justify-between px-6 py-4">
+      <header className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+        <nav className="container mx-auto flex items-center justify-between px-6 py-4">
           <h1 className="text-2xl font-bold">TrackMySIWES</h1>
           <div className="flex gap-4">
             <Link to="/auth">
@@ -74,11 +48,11 @@ const Index = () => {
           </div>
         </nav>
         
-        <div className="container relative z-10 mx-auto px-6 py-16 lg:py-20">
+        <div className="container mx-auto px-6 py-16 lg:py-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Hero Text */}
             <div className="text-center lg:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm backdrop-blur-sm">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm">
                 <GraduationCap className="h-4 w-4" />
                 <span>SIWES Management Platform</span>
               </div>
@@ -90,12 +64,12 @@ const Index = () => {
               </p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
                 <Link to="/auth">
-                  <Button size="lg" variant="secondary" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
+                  <Button size="lg" variant="secondary" className="gap-2">
                     Get Started <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/auth">
-                  <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm">
+                  <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
                     Login to Account
                   </Button>
                 </Link>
@@ -107,17 +81,16 @@ const Index = () => {
             
             {/* Hero Dashboard Image */}
             <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
-              <div className="relative rounded-xl bg-white/5 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm transition-transform duration-500 hover:scale-[1.02]">
+              <div className="relative rounded-xl bg-white/5 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm">
                 <img
                   src={heroDashboard}
                   alt="TrackMySIWES Dashboard showing progress tracking, logbook entries, and attendance analytics"
                   className="rounded-lg shadow-lg w-full"
                 />
               </div>
-              {/* Decorative Elements with animations */}
-              <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-secondary/20 blur-2xl animate-pulse-glow" />
-              <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-primary-foreground/10 blur-2xl animate-float" />
-              <div className="absolute bottom-1/4 -right-8 h-16 w-16 rounded-full bg-accent/30 blur-xl animate-float-delayed" />
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-secondary/20 blur-2xl" />
+              <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-primary-foreground/10 blur-2xl" />
             </div>
           </div>
         </div>
@@ -167,15 +140,9 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="bg-muted/30 relative overflow-hidden">
-        {/* Animated background decoration */}
+        {/* Subtle background decoration */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--primary)/0.03),transparent_50%)]" />
-        
-        {/* Floating particles */}
-        <div className="absolute top-20 left-10 h-4 w-4 rounded-full bg-primary/10 animate-particle-drift" />
-        <div className="absolute top-40 right-20 h-3 w-3 rounded-full bg-accent/20 animate-float" />
-        <div className="absolute bottom-32 left-1/4 h-5 w-5 rounded-full bg-primary/5 animate-float-delayed" />
-        <div className="absolute bottom-20 right-1/3 h-3 w-3 rounded-full bg-secondary/30 animate-pulse-glow" />
         
         <div className="container relative mx-auto px-6 py-24">
           <div className="mb-4 flex justify-center">
@@ -310,15 +277,8 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        {/* Animated background for CTA */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-primary-foreground/10 blur-3xl animate-float" />
-          <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-accent/20 blur-3xl animate-float-delayed" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-primary-foreground/5 blur-3xl animate-pulse-glow" />
-        </div>
-        
-        <div className="container relative z-10 mx-auto px-6 py-16 text-center">
+      <section className="bg-primary text-primary-foreground">
+        <div className="container mx-auto px-6 py-16 text-center">
           <h3 className="mb-4 text-2xl font-bold md:text-3xl">
             Ready to Modernize Your SIWES Experience?
           </h3>
@@ -326,7 +286,7 @@ const Index = () => {
             Join students and supervisors already using TrackMySIWES for efficient internship management.
           </p>
           <Link to="/auth">
-            <Button size="lg" variant="secondary" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
+            <Button size="lg" variant="secondary" className="gap-2">
               Create Your Account <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
