@@ -30,8 +30,17 @@ import mockupReview from "@/assets/mockup-review.png";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+      {/* Hero Section with Background Image */}
+      <header className="relative min-h-screen overflow-hidden text-primary-foreground">
+        {/* Hero Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroDashboard})` }}
+        />
+        
+        {/* Dark Overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/85 to-primary/80" />
+        
         {/* Animated Background Layer */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Floating Gradient Orbs */}
@@ -40,15 +49,20 @@ const Index = () => {
           <div className="absolute -bottom-20 left-1/4 h-72 w-72 rounded-full bg-gradient-to-tr from-accent/20 to-transparent blur-3xl animate-pulse-glow opacity-40" />
           <div className="absolute top-1/4 left-1/2 h-64 w-64 rounded-full bg-gradient-to-r from-primary-foreground/10 to-transparent blur-2xl animate-particle-drift opacity-30" />
           
+          {/* More floating particles across the page */}
+          <div className="absolute top-[60%] left-[10%] h-32 w-32 rounded-full bg-accent/10 blur-2xl animate-float" />
+          <div className="absolute top-[20%] right-[15%] h-40 w-40 rounded-full bg-secondary/15 blur-3xl animate-pulse-glow" />
+          <div className="absolute bottom-[30%] right-[25%] h-24 w-24 rounded-full bg-primary-foreground/10 blur-xl animate-float-delayed" />
+          
           {/* Animated Mesh Grid */}
           <div 
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.05]"
             style={{
               backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+                linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)
               `,
-              backgroundSize: '60px 60px',
+              backgroundSize: '80px 80px',
             }}
           />
           
@@ -74,50 +88,48 @@ const Index = () => {
           </div>
         </nav>
         
-        <div className="container relative z-10 mx-auto px-6 py-16 lg:py-20">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            {/* Hero Text */}
-            <div className="text-center lg:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm backdrop-blur-sm">
-                <GraduationCap className="h-4 w-4" />
-                <span>SIWES Management Platform</span>
-              </div>
-              <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-5xl xl:text-6xl">
-                A Smart SIWES Monitoring and Internship Logbook System
-              </h2>
-              <p className="mb-8 max-w-xl text-lg text-primary-foreground/80 md:text-xl lg:mx-0 mx-auto">
-                TrackMySIWES is a centralized digital platform for managing SIWES logbooks, supervision, attendance, and progress tracking for students and supervisors.
-              </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-                <Link to="/auth">
-                  <Button size="lg" variant="secondary" className="gap-2 shadow-lg hover:shadow-xl transition-shadow">
-                    Get Started <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm">
-                    Login to Account
-                  </Button>
-                </Link>
-              </div>
-              <p className="mt-6 text-sm text-primary-foreground/60">
-                Built to support structured SIWES supervision and academic assessment.
-              </p>
-            </div>
-            
-            {/* Hero Dashboard Image */}
-            <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
-              <div className="relative rounded-xl bg-white/5 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm transition-transform duration-500 hover:scale-[1.02]">
-                <img
-                  src={heroDashboard}
-                  alt="TrackMySIWES Dashboard showing progress tracking, logbook entries, and attendance analytics"
-                  className="rounded-lg shadow-lg w-full"
-                />
-              </div>
-              {/* Decorative Elements with animations */}
-              <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-secondary/20 blur-2xl animate-pulse-glow" />
-              <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-primary-foreground/10 blur-2xl animate-float" />
-              <div className="absolute bottom-1/4 -right-8 h-16 w-16 rounded-full bg-accent/30 blur-xl animate-float-delayed" />
+        <div className="container relative z-10 mx-auto flex min-h-[calc(100vh-80px)] flex-col items-center justify-center px-6 py-16 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm backdrop-blur-sm animate-fade-in">
+            <GraduationCap className="h-4 w-4" />
+            <span>SIWES Management Platform</span>
+          </div>
+          
+          {/* Animated Hero Title */}
+          <h2 className="mb-6 max-w-4xl text-4xl font-bold md:text-5xl lg:text-6xl xl:text-7xl animate-slide-up">
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_0.1s_forwards] opacity-0">A Smart </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_0.3s_forwards] opacity-0 text-secondary">SIWES </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_0.5s_forwards] opacity-0">Monitoring </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_0.7s_forwards] opacity-0">and </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_0.9s_forwards] opacity-0 text-accent">Internship </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_1.1s_forwards] opacity-0">Logbook </span>
+            <span className="inline-block animate-[fade-in_0.6s_ease-out_1.3s_forwards] opacity-0">System</span>
+          </h2>
+          
+          <p className="mb-8 max-w-2xl text-lg text-primary-foreground/80 md:text-xl animate-[fade-in_0.8s_ease-out_1.5s_forwards] opacity-0">
+            TrackMySIWES is a centralized digital platform for managing SIWES logbooks, supervision, attendance, and progress tracking for students and supervisors.
+          </p>
+          
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row animate-[fade-in_0.8s_ease-out_1.8s_forwards] opacity-0">
+            <Link to="/auth">
+              <Button size="lg" variant="secondary" className="gap-2 shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+                Get Started <ArrowRight className="h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button size="lg" variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm hover:scale-105 transition-all">
+                Login to Account
+              </Button>
+            </Link>
+          </div>
+          
+          <p className="mt-8 text-sm text-primary-foreground/60 animate-[fade-in_0.8s_ease-out_2s_forwards] opacity-0">
+            Built to support structured SIWES supervision and academic assessment.
+          </p>
+          
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <div className="h-8 w-5 rounded-full border-2 border-primary-foreground/30 p-1">
+              <div className="h-2 w-1 mx-auto rounded-full bg-primary-foreground/50 animate-[fade-in_1s_ease-in-out_infinite]" />
             </div>
           </div>
         </div>
