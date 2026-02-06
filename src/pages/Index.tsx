@@ -57,7 +57,15 @@ const Index = () => {
                 <span>SIWES Management Platform</span>
               </div>
               <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-5xl xl:text-6xl">
-                A Smart SIWES Monitoring and Internship Logbook System
+                {["A", "Smart", "SIWES", "Monitoring", "and", "Internship", "Logbook", "System"].map((word, index) => (
+                  <span
+                    key={index}
+                    className="inline-block opacity-0 animate-[fade-in-up_0.5s_ease-out_forwards]"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    {word}{index < 7 ? "\u00A0" : ""}
+                  </span>
+                ))}
               </h2>
               <p className="mb-8 max-w-xl text-lg text-primary-foreground/80 md:text-xl lg:mx-0 mx-auto">
                 TrackMySIWES is a centralized digital platform for managing SIWES logbooks, supervision, attendance, and progress tracking for students and supervisors.
