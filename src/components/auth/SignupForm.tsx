@@ -384,6 +384,25 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
             />
           )}
 
+          {watchRole === "supervisor" && (
+            <FormField
+              control={form.control}
+              name="staff_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Staff / Employee ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. STAFF/2024/0123" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Your unique institution-issued staff ID. Must be unique across supervisors.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="password"
