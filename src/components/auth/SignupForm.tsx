@@ -159,11 +159,14 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
         programme: data.programme,
         role: data.role,
         supervisor_id: data.role === "student" ? data.supervisor_id : undefined,
+        staff_id: data.role === "supervisor" ? data.staff_id?.trim() : undefined,
       });
 
       if (error) {
         if (error.message.includes("already registered")) {
           toast.error("An account with this email already exists. Please login instead.");
+        } else if (error.message.toLowerCase().includes("staff_id") || error.message.includes("profiles_staff_id_unique")) {
+          toast.error("This Staff ID is already in use. Please verify and try again.");
         } else {
           toast.error(error.message);
         }
