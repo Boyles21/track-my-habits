@@ -43,13 +43,13 @@ const signupSchema = z.object({
   programme: z.string().min(1, "Please select a programme"),
   role: z.enum(["student", "supervisor"], { required_error: "Please select a role" }),
   supervisor_id: z.string().optional(),
+  staff_id: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 }).refine((data) => {
-  // If role is student, supervisor_id is required
   if (data.role === "student") {
     return !!data.supervisor_id;
   }
@@ -57,6 +57,14 @@ const signupSchema = z.object({
 }, {
   message: "Please select a supervisor",
   path: ["supervisor_id"],
+}).refine((data) => {
+  if (data.role === "supervisor") {
+    return !!data.staff_id && data.staff_id.trim().length >= 3;
+  }
+  return true;
+}, {
+  message: "Staff ID is required (min 3 characters)",
+  path: ["staff_id"],
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
