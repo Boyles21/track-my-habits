@@ -38,6 +38,7 @@ interface SignUpData {
   programme: string;
   role: UserRole;
   supervisor_id?: string; // Required for students
+  staff_id?: string; // Required for supervisors
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           department: data.department,
           programme: data.programme,
           role: data.role,
+          staff_id: data.staff_id,
         },
       },
     });

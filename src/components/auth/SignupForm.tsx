@@ -43,13 +43,13 @@ const signupSchema = z.object({
   programme: z.string().min(1, "Please select a programme"),
   role: z.enum(["student", "supervisor"], { required_error: "Please select a role" }),
   supervisor_id: z.string().optional(),
+  staff_id: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 }).refine((data) => {
-  // If role is student, supervisor_id is required
   if (data.role === "student") {
     return !!data.supervisor_id;
   }
@@ -57,6 +57,14 @@ const signupSchema = z.object({
 }, {
   message: "Please select a supervisor",
   path: ["supervisor_id"],
+}).refine((data) => {
+  if (data.role === "supervisor") {
+    return !!data.staff_id && data.staff_id.trim().length >= 3;
+  }
+  return true;
+}, {
+  message: "Staff ID is required (min 3 characters)",
+  path: ["staff_id"],
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -85,6 +93,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
       programme: "",
       role: "student",
       supervisor_id: "",
+      staff_id: "",
       password: "",
       confirmPassword: "",
     },
@@ -150,11 +159,14 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
         programme: data.programme,
         role: data.role,
         supervisor_id: data.role === "student" ? data.supervisor_id : undefined,
+        staff_id: data.role === "supervisor" ? data.staff_id?.trim() : undefined,
       });
 
       if (error) {
         if (error.message.includes("already registered")) {
           toast.error("An account with this email already exists. Please login instead.");
+        } else if (error.message.toLowerCase().includes("staff_id") || error.message.includes("profiles_staff_id_unique")) {
+          toast.error("This Staff ID is already in use. Please verify and try again.");
         } else {
           toast.error(error.message);
         }
@@ -366,6 +378,25 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
                       </SelectContent>
                     </Select>
                   )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {watchRole === "supervisor" && (
+            <FormField
+              control={form.control}
+              name="staff_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Staff / Employee ID *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. STAFF/2024/0123" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Your unique institution-issued staff ID. Must be unique across supervisors.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
