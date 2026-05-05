@@ -93,6 +93,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
       programme: "",
       role: "student",
       supervisor_id: "",
+      staff_id: "",
       password: "",
       confirmPassword: "",
     },
