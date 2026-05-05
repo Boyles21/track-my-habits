@@ -38,6 +38,7 @@ interface SignUpData {
   programme: string;
   role: UserRole;
   supervisor_id?: string; // Required for students
+  staff_id?: string; // Required for supervisors
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
