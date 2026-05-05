@@ -122,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           department: data.department,
           programme: data.programme,
           role: data.role,
+          staff_id: data.staff_id,
         },
       },
     });
