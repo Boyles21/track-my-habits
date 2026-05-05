@@ -284,6 +284,7 @@ export type Database = {
           institution_id: string | null
           organization_id: string | null
           programme: string | null
+          staff_id: string | null
           updated_at: string
         }
         Insert: {
@@ -298,6 +299,7 @@ export type Database = {
           institution_id?: string | null
           organization_id?: string | null
           programme?: string | null
+          staff_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -312,6 +314,7 @@ export type Database = {
           institution_id?: string | null
           organization_id?: string | null
           programme?: string | null
+          staff_id?: string | null
           updated_at?: string
         }
         Relationships: [
