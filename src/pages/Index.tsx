@@ -32,23 +32,23 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        <nav className="container mx-auto flex items-center justify-between px-6 py-4">
-          <h1 className="text-2xl font-bold">TrackMySIWES</h1>
-          <div className="flex gap-4">
+        <nav className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-4 gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold">TrackMySIWES</h1>
+          <div className="flex gap-2 sm:gap-4">
             <Link to="/auth">
-              <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
+              <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 sm:h-10 sm:px-4">
                 Login
               </Button>
             </Link>
             <Link to="/auth">
-              <Button variant="secondary">
+              <Button variant="secondary" size="sm" className="sm:h-10 sm:px-4">
                 Get Started
               </Button>
             </Link>
           </div>
         </nav>
         
-        <div className="container mx-auto px-6 py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Hero Text */}
             <div className="text-center lg:text-left">
@@ -56,7 +56,7 @@ const Index = () => {
                 <GraduationCap className="h-4 w-4" />
                 <span>SIWES Management Platform</span>
               </div>
-              <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-5xl xl:text-6xl">
+              <h2 className="mb-6 text-3xl font-bold sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
                 {["A", "Smart", "SIWES", "Monitoring", "and", "Internship", "Logbook", "System"].map((word, index) => (
                   <span
                     key={index}
@@ -105,8 +105,8 @@ const Index = () => {
       </header>
 
       {/* Who It's For Section */}
-      <section className="container mx-auto px-6 py-20">
-        <h3 className="mb-4 text-center text-3xl font-bold text-foreground">
+      <section className="container mx-auto px-4 sm:px-6 py-14 sm:py-20">
+        <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
           Who TrackMySIWES Is Built For
         </h3>
         <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
@@ -152,14 +152,14 @@ const Index = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--primary)/0.03),transparent_50%)]" />
         
-        <div className="container relative mx-auto px-6 py-24">
+        <div className="container relative mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <div className="mb-4 flex justify-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
               <TrendingUp className="h-4 w-4" />
               Powerful Features
             </span>
           </div>
-          <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
+          <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground md:text-4xl">
             Core Features of TrackMySIWES
           </h3>
           <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
@@ -199,14 +199,14 @@ const Index = () => {
       </section>
 
       {/* See It In Action Section */}
-      <section className="container mx-auto px-6 py-24">
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="mb-4 flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
             <BookOpen className="h-4 w-4" />
             Product Preview
           </span>
         </div>
-        <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
+        <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground md:text-4xl">
           See TrackMySIWES in Action
         </h3>
         <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
@@ -241,9 +241,9 @@ const Index = () => {
       </section>
 
       {/* Academic Value Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <div className="mx-auto max-w-4xl">
-          <h3 className="mb-4 text-center text-3xl font-bold text-foreground">
+          <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
             Why TrackMySIWES Matters
           </h3>
           <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
@@ -286,7 +286,7 @@ const Index = () => {
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-6 py-16 text-center">
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
           <h3 className="mb-4 text-2xl font-bold md:text-3xl">
             Ready to Modernize Your SIWES Experience?
           </h3>
@@ -303,7 +303,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border bg-background py-8">
-        <div className="container mx-auto px-6 text-center">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
           <p className="mb-4 text-sm text-muted-foreground">
             TrackMySIWES is a final-year project designed to improve the effectiveness of Student Industrial Work Experience Scheme (SIWES) monitoring.
           </p>

@@ -157,9 +157,9 @@ export default function Organizations() {
   return (
     <DashboardLayout>
       <div className="space-y-6 fade-in">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Organizations</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Organizations</h1>
             <p className="text-muted-foreground">Manage SIWES placement companies</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

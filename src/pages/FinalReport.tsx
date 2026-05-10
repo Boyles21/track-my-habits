@@ -319,7 +319,7 @@ export default function FinalReport() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header - Hidden in print */}
-        <div className="flex items-center justify-between print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
               <Link to={role === "student" ? "/dashboard" : "/students"}>
