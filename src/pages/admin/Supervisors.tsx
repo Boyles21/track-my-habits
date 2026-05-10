@@ -173,7 +173,7 @@ export default function Supervisors() {
     <DashboardLayout>
       <div className="space-y-6 fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Supervisors</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Supervisors</h1>
           <p className="text-muted-foreground">View supervisor workload and assignments</p>
         </div>
 

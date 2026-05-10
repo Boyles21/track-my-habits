@@ -106,7 +106,7 @@ const Index = () => {
 
       {/* Who It's For Section */}
       <section className="container mx-auto px-6 py-20">
-        <h3 className="mb-4 text-center text-3xl font-bold text-foreground">
+        <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
           Who TrackMySIWES Is Built For
         </h3>
         <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
@@ -159,7 +159,7 @@ const Index = () => {
               Powerful Features
             </span>
           </div>
-          <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
+          <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground md:text-4xl">
             Core Features of TrackMySIWES
           </h3>
           <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
@@ -206,7 +206,7 @@ const Index = () => {
             Product Preview
           </span>
         </div>
-        <h3 className="mb-4 text-center text-3xl font-bold text-foreground md:text-4xl">
+        <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground md:text-4xl">
           See TrackMySIWES in Action
         </h3>
         <p className="mx-auto mb-16 max-w-2xl text-center text-lg text-muted-foreground">
@@ -243,7 +243,7 @@ const Index = () => {
       {/* Academic Value Section */}
       <section className="container mx-auto px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <h3 className="mb-4 text-center text-3xl font-bold text-foreground">
+          <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
             Why TrackMySIWES Matters
           </h3>
           <p className="mx-auto mb-12 max-w-2xl text-center text-muted-foreground">
