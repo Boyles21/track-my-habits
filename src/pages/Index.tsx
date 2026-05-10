@@ -32,23 +32,23 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        <nav className="container mx-auto flex items-center justify-between px-6 py-4">
-          <h1 className="text-2xl font-bold">TrackMySIWES</h1>
-          <div className="flex gap-4">
+        <nav className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-4 gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold">TrackMySIWES</h1>
+          <div className="flex gap-2 sm:gap-4">
             <Link to="/auth">
-              <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
+              <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 sm:h-10 sm:px-4">
                 Login
               </Button>
             </Link>
             <Link to="/auth">
-              <Button variant="secondary">
+              <Button variant="secondary" size="sm" className="sm:h-10 sm:px-4">
                 Get Started
               </Button>
             </Link>
           </div>
         </nav>
         
-        <div className="container mx-auto px-6 py-16 lg:py-20">
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Hero Text */}
             <div className="text-center lg:text-left">
@@ -56,7 +56,7 @@ const Index = () => {
                 <GraduationCap className="h-4 w-4" />
                 <span>SIWES Management Platform</span>
               </div>
-              <h2 className="mb-6 text-4xl font-bold md:text-5xl lg:text-5xl xl:text-6xl">
+              <h2 className="mb-6 text-3xl font-bold sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
                 {["A", "Smart", "SIWES", "Monitoring", "and", "Internship", "Logbook", "System"].map((word, index) => (
                   <span
                     key={index}
