@@ -105,7 +105,7 @@ const Index = () => {
       </header>
 
       {/* Who It's For Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
           Who TrackMySIWES Is Built For
         </h3>
@@ -152,7 +152,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.05),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--primary)/0.03),transparent_50%)]" />
         
-        <div className="container relative mx-auto px-6 py-24">
+        <div className="container relative mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <div className="mb-4 flex justify-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
               <TrendingUp className="h-4 w-4" />
@@ -199,7 +199,7 @@ const Index = () => {
       </section>
 
       {/* See It In Action Section */}
-      <section className="container mx-auto px-6 py-24">
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
         <div className="mb-4 flex justify-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
             <BookOpen className="h-4 w-4" />
@@ -241,7 +241,7 @@ const Index = () => {
       </section>
 
       {/* Academic Value Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <div className="mx-auto max-w-4xl">
           <h3 className="mb-4 text-center text-2xl sm:text-3xl font-bold text-foreground">
             Why TrackMySIWES Matters
@@ -286,7 +286,7 @@ const Index = () => {
 
       {/* CTA Section */}
       <section className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-6 py-16 text-center">
+        <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
           <h3 className="mb-4 text-2xl font-bold md:text-3xl">
             Ready to Modernize Your SIWES Experience?
           </h3>
@@ -303,7 +303,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border bg-background py-8">
-        <div className="container mx-auto px-6 text-center">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
           <p className="mb-4 text-sm text-muted-foreground">
             TrackMySIWES is a final-year project designed to improve the effectiveness of Student Industrial Work Experience Scheme (SIWES) monitoring.
           </p>
