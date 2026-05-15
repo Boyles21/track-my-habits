@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Form,
   FormControl,
@@ -410,7 +411,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="********" {...field} disabled={isLoading} />
+                  <PasswordInput autoComplete="new-password" placeholder="At least 6 characters" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -424,7 +425,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
               <FormItem>
                 <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="********" {...field} disabled={isLoading} />
+                  <PasswordInput autoComplete="new-password" placeholder="Re-enter your password" {...field} disabled={isLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
