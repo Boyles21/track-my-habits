@@ -109,8 +109,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const APP_URL = "https://trackmysiwes.onrender.com";
+
   const signUp = async (data: SignUpData): Promise<{ error: Error | null }> => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${APP_URL}/`;
 
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
@@ -172,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string): Promise<{ error: Error | null }> => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${APP_URL}/reset-password`,
     });
     if (error) return { error: new Error(error.message) };
     return { error: null };
