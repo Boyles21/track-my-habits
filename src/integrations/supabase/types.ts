@@ -332,6 +332,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       siwes_settings: {
@@ -427,6 +434,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "student_placements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       supervisor_reassignments: {
@@ -508,7 +522,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      organizations_public: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string | null
+          industry: string | null
+          name: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          name?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string | null
+          industry?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_student_to_supervisor: {
