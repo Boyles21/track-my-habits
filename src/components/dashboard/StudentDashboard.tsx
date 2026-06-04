@@ -59,7 +59,7 @@ interface LogbookEntry {
 
 interface DocumentItem {
   id: string;
-  title: string;
+  file_name: string;
   created_at: string;
 }
 
