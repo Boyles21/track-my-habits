@@ -1,73 +1,196 @@
-# Welcome to your Lovable project
+# TrackMySIWES
 
-## Project info
+A modern SIWES (Student Industrial Work Experience Scheme) management platform designed to digitize internship tracking, logbook submissions, document management, compliance monitoring, and supervisor approvals.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Overview
 
-## How can I edit this code?
+TrackMySIWES helps students, supervisors, and institutions manage SIWES activities efficiently through a centralized web platform.
 
-There are several ways of editing your application.
+The platform eliminates manual paperwork by providing real-time progress tracking, digital logbooks, document uploads, compliance monitoring, and approval workflows.
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Student Dashboard
 
-Changes made via Lovable will be committed automatically to this repo.
+* Real-time SIWES progress tracking
+* Hours completed monitoring
+* Days completed monitoring
+* Approval status overview
+* Compliance and violation alerts
+* Weekly analytics and progress visualization
+* Recent activity tracking
+* Personalized action recommendations
 
-**Use your preferred IDE**
+### Digital Logbook
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+* Daily internship activity submissions
+* Work hour tracking
+* Activity descriptions and summaries
+* Supervisor review workflow
+* Entry approval and revision requests
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Document Management
 
-Follow these steps:
+* Upload internship-related documents
+* Secure document storage
+* Organized file management
+* Easy access to submitted files
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Final Report Submission
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+* Digital final report uploads
+* Submission tracking
+* Supervisor review process
+* Approval workflow
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Compliance Monitoring
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+* Minimum weekly hour validation
+* Progress compliance checks
+* Automated violation detection
+* Corrective action recommendations
+
+### Supervisor Workflow
+
+* Review student submissions
+* Approve or reject logbook entries
+* Request revisions
+* Monitor student progress
+* Track compliance status
+
+## Technology Stack
+
+### Frontend
+
+* React
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* Recharts
+
+### Backend
+
+* Node.js
+* Express.js
+
+### Database
+
+* PostgreSQL / MySQL (depending on deployment)
+
+### Authentication
+
+* JWT Authentication
+* Role-Based Access Control (RBAC)
+
+## User Roles
+
+### Student
+
+Students can:
+
+* Submit daily logbook entries
+* Track internship progress
+* Upload required documents
+* View supervisor feedback
+* Submit final reports
+
+### Supervisor
+
+Supervisors can:
+
+* Review student entries
+* Approve submissions
+* Request revisions
+* Monitor compliance
+* Track student performance
+
+### Administrator
+
+Administrators can:
+
+* Manage users
+* Monitor platform activities
+* Configure SIWES requirements
+* Generate reports
+* Oversee institution-wide progress
+
+## Dashboard Analytics
+
+The dashboard provides:
+
+* Total hours completed
+* Days completed
+* Approval rate
+* Compliance status
+* Weekly performance trends
+* Progress projections
+* Outstanding actions
+
+## Project Goals
+
+* Digitize SIWES management processes
+* Improve transparency between students and supervisors
+* Reduce paperwork and administrative overhead
+* Enable real-time progress monitoring
+* Improve compliance tracking
+* Enhance reporting and documentation
+
+## Installation
+
+```bash
+git clone https://github.com/yourusername/trackmysiwes.git
+
+cd trackmysiwes
+
+npm install
+
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file in the root directory:
 
-**Use GitHub Codespaces**
+```env
+DATABASE_URL=
+JWT_SECRET=
+PORT=
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Running the Project
 
-## What technologies are used for this project?
+Development:
 
-This project is built with:
+```bash
+npm run dev
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Production:
 
-## How can I deploy this project?
+```bash
+npm run build
+npm start
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Future Enhancements
 
-## Can I connect a custom domain to my Lovable project?
+* Mobile application
+* Push notifications
+* Email reminders
+* AI-powered report assistance
+* Attendance verification
+* Industry supervisor portal
+* Analytics dashboard for institutions
+* Exportable SIWES reports
 
-Yes, you can!
+## Contributing
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Contributions are welcome. Please create a feature branch, submit a pull request, and follow the project's coding standards.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## License
+
+This project is licensed under the MIT License.
+
+## Author
+
+Built to modernize and simplify SIWES management for students, supervisors, and educational institutions.
