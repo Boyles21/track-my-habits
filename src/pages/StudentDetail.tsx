@@ -247,7 +247,7 @@ export default function StudentDetail() {
         <div className="text-center py-12">
           <p className="text-muted-foreground">Student not found</p>
           <Button asChild className="mt-4">
-            <Link to="/students">Back to My Students</Link>
+            <Link to={role === "admin" ? "/admin/students" : "/students"}>Back</Link>
           </Button>
         </div>
       </DashboardLayout>
