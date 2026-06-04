@@ -79,31 +79,33 @@ export default function StudentDetail() {
     if (!authLoading && !user) {
       navigate("/auth");
     }
-    if (!authLoading && role !== "supervisor") {
+    if (!authLoading && role && role !== "supervisor" && role !== "admin") {
       navigate("/dashboard");
     }
   }, [user, role, authLoading, navigate]);
 
   useEffect(() => {
-    if (user && role === "supervisor" && id) {
+    if (user && (role === "supervisor" || role === "admin") && id) {
       fetchStudentData();
     }
   }, [user, role, id]);
 
   const fetchStudentData = async () => {
     try {
-      // Step 1: Verify this student is assigned to the supervisor
-      const { data: assignment } = await supabase
-        .from("supervisor_students")
-        .select("student_id")
-        .eq("supervisor_id", user?.id)
-        .eq("student_id", id)
-        .maybeSingle();
+      // Supervisors can only view their assigned students. Admins bypass this check.
+      if (role === "supervisor") {
+        const { data: assignment } = await supabase
+          .from("supervisor_students")
+          .select("student_id")
+          .eq("supervisor_id", user?.id)
+          .eq("student_id", id)
+          .maybeSingle();
 
-      if (!assignment) {
-        toast.error("You don't have permission to view this student");
-        navigate("/students");
-        return;
+        if (!assignment) {
+          toast.error("You don't have permission to view this student");
+          navigate("/students");
+          return;
+        }
       }
 
       // Step 2: Fetch student profile
