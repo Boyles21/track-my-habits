@@ -152,7 +152,7 @@ export default function StudentDashboard() {
 
       const { data: docs } = await supabase
         .from("documents")
-        .select("id, title, created_at")
+        .select("id, file_name, created_at")
         .eq("user_id", user?.id)
         .order("created_at", { ascending: false })
         .limit(3);
@@ -530,7 +530,7 @@ export default function StudentDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">Document uploaded</p>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{d.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{d.file_name}</p>
                       </div>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo(d.created_at)}</span>
                     </li>
