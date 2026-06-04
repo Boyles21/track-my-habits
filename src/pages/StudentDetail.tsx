@@ -79,31 +79,33 @@ export default function StudentDetail() {
     if (!authLoading && !user) {
       navigate("/auth");
     }
-    if (!authLoading && role !== "supervisor") {
+    if (!authLoading && role && role !== "supervisor" && role !== "admin") {
       navigate("/dashboard");
     }
   }, [user, role, authLoading, navigate]);
 
   useEffect(() => {
-    if (user && role === "supervisor" && id) {
+    if (user && (role === "supervisor" || role === "admin") && id) {
       fetchStudentData();
     }
   }, [user, role, id]);
 
   const fetchStudentData = async () => {
     try {
-      // Step 1: Verify this student is assigned to the supervisor
-      const { data: assignment } = await supabase
-        .from("supervisor_students")
-        .select("student_id")
-        .eq("supervisor_id", user?.id)
-        .eq("student_id", id)
-        .maybeSingle();
+      // Supervisors can only view their assigned students. Admins bypass this check.
+      if (role === "supervisor") {
+        const { data: assignment } = await supabase
+          .from("supervisor_students")
+          .select("student_id")
+          .eq("supervisor_id", user?.id)
+          .eq("student_id", id)
+          .maybeSingle();
 
-      if (!assignment) {
-        toast.error("You don't have permission to view this student");
-        navigate("/students");
-        return;
+        if (!assignment) {
+          toast.error("You don't have permission to view this student");
+          navigate("/students");
+          return;
+        }
       }
 
       // Step 2: Fetch student profile
@@ -245,7 +247,7 @@ export default function StudentDetail() {
         <div className="text-center py-12">
           <p className="text-muted-foreground">Student not found</p>
           <Button asChild className="mt-4">
-            <Link to="/students">Back to My Students</Link>
+            <Link to={role === "admin" ? "/admin/students" : "/students"}>Back</Link>
           </Button>
         </div>
       </DashboardLayout>
@@ -258,7 +260,7 @@ export default function StudentDetail() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link to="/students">
+            <Link to={role === "admin" ? "/admin/students" : "/students"}>
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
