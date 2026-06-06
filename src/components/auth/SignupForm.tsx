@@ -30,9 +30,7 @@ import { getFaculties, getDepartments, getProgrammes } from "@/lib/faculty-data"
 interface Supervisor {
   id: string;
   full_name: string;
-  email: string;
   institution: string | null;
-  department: string | null;
 }
 
 const signupSchema = z.object({
@@ -371,7 +369,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
                             <div className="flex flex-col">
                               <span>{supervisor.full_name}</span>
                               <span className="text-xs text-muted-foreground">
-                                {supervisor.department} • {supervisor.institution}
+                                {supervisor.institution}
                               </span>
                             </div>
                           </SelectItem>

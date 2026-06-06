@@ -556,8 +556,6 @@ export type Database = {
       get_supervisors: {
         Args: never
         Returns: {
-          department: string
-          email: string
           full_name: string
           id: string
           institution: string
