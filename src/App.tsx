@@ -52,14 +52,15 @@ const App = () => (
             <Route path="/report" element={<FinalReport />} />
             <Route path="/report/:id" element={<FinalReport />} />
             {/* Admin routes */}
-            <Route path="/admin/students" element={<AllStudents />} />
-            <Route path="/admin/students/:id" element={<StudentDetail />} />
-            <Route path="/admin/supervisors" element={<Supervisors />} />
-            <Route path="/admin/institutions" element={<Institutions />} />
-            <Route path="/admin/organizations" element={<Organizations />} />
-            <Route path="/admin/skills" element={<Skills />} />
-            <Route path="/admin/analytics" element={<Analytics />} />
-            <Route path="/admin/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/students" element={<AdminRoute><AllStudents /></AdminRoute>} />
+            <Route path="/admin/students/:id" element={<AdminRoute><StudentDetail /></AdminRoute>} />
+            <Route path="/admin/supervisors" element={<AdminRoute><Supervisors /></AdminRoute>} />
+            <Route path="/admin/institutions" element={<AdminRoute><Institutions /></AdminRoute>} />
+            <Route path="/admin/organizations" element={<AdminRoute><Organizations /></AdminRoute>} />
+            <Route path="/admin/skills" element={<AdminRoute><Skills /></AdminRoute>} />
+            <Route path="/admin/analytics" element={<AdminRoute><Analytics /></AdminRoute>} />
+            <Route path="/admin/audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
