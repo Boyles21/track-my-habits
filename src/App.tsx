@@ -17,6 +17,7 @@ import Reviews from "./pages/Reviews";
 import ReviewEntry from "./pages/ReviewEntry";
 import NotFound from "./pages/NotFound";
 import FinalReport from "./pages/FinalReport";
+import AdminRoute from "@/components/auth/AdminRoute";
 // Admin pages
 import Institutions from "./pages/admin/Institutions";
 import Organizations from "./pages/admin/Organizations";
