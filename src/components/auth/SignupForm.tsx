@@ -369,7 +369,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
                             <div className="flex flex-col">
                               <span>{supervisor.full_name}</span>
                               <span className="text-xs text-muted-foreground">
-                                {supervisor.department} • {supervisor.institution}
+                                {supervisor.institution}
                               </span>
                             </div>
                           </SelectItem>
