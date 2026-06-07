@@ -588,6 +588,7 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_institution_by_name: { Args: { _name: string }; Returns: string }
     }
     Enums: {
       app_role: "student" | "supervisor" | "admin"

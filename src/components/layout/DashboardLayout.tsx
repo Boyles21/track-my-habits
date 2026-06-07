@@ -18,6 +18,7 @@ import {
   ScrollText,
   Shield,
   ClipboardList,
+  UserCircle2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -41,12 +42,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: "/logbook", icon: BookOpen, label: "Logbook" },
     { href: "/documents", icon: FileText, label: "Documents" },
     { href: "/report", icon: ClipboardList, label: "Final Report" },
+    { href: "/profile", icon: UserCircle2, label: "Profile" },
   ];
 
   const supervisorNavItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/students", icon: Users, label: "My Students" },
     { href: "/reviews", icon: MessageSquare, label: "Reviews" },
+    { href: "/profile", icon: UserCircle2, label: "Profile" },
   ];
 
   const adminNavItems = [
