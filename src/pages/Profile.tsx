@@ -62,7 +62,14 @@ export default function Profile() {
     if (!user) return;
     setSaving(true);
 
-    const updates: Record<string, any> = {
+    const updates: {
+      full_name: string;
+      institution: string | null;
+      faculty: string | null;
+      department: string | null;
+      programme: string | null;
+      staff_id?: string | null;
+    } = {
       full_name: form.full_name.trim(),
       institution: form.institution.trim() || null,
       faculty: form.faculty || null,
