@@ -83,16 +83,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer Supabase calls with setTimeout
         if (session?.user) {
+          // Keep loading true until role/profile are fetched so route guards
+          // don't redirect prematurely (role would be null otherwise).
+          setLoading(true);
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            fetchUserData(session.user.id).finally(() => setLoading(false));
           }, 0);
         } else {
           setRole(null);
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -101,9 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        fetchUserData(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
