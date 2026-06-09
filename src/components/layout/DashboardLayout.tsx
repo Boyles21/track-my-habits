@@ -21,6 +21,7 @@ import {
   UserCircle2,
 } from "lucide-react";
 import { useState } from "react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -74,13 +75,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card">
         <h1 className="text-xl font-bold text-primary">TrackMySIWES</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
       </div>
 
       <div className="flex">
@@ -151,7 +155,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen w-full min-w-0 overflow-x-hidden">{children}</main>
+        {/* Main content */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="hidden lg:flex items-center justify-end gap-2 px-8 h-14 border-b bg-card/50 backdrop-blur">
+            <NotificationBell />
+          </div>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen w-full min-w-0 overflow-x-hidden">{children}</main>
+        </div>
       </div>
     </div>
   );
