@@ -75,13 +75,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card">
         <h1 className="text-xl font-bold text-primary">TrackMySIWES</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
       </div>
 
       <div className="flex">
