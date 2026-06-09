@@ -155,7 +155,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen w-full min-w-0 overflow-x-hidden">{children}</main>
+        {/* Main content */}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="hidden lg:flex items-center justify-end gap-2 px-8 h-14 border-b bg-card/50 backdrop-blur">
+            <NotificationBell />
+          </div>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 min-h-screen w-full min-w-0 overflow-x-hidden">{children}</main>
+        </div>
       </div>
     </div>
   );
