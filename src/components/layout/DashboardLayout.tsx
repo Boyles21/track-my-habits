@@ -21,6 +21,7 @@ import {
   UserCircle2,
 } from "lucide-react";
 import { useState } from "react";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface DashboardLayoutProps {
   children: ReactNode;
