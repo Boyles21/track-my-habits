@@ -198,15 +198,15 @@ export default function StudentDashboard() {
   }, [stats.totalHours, weeklyData.length, remainingHours]);
 
   const chartData = useMemo(() => {
-    return [...weeklyData]
-      .reverse()
-      .slice(-8)
-      .map((w) => ({
-        week: w.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        hours: Math.round(w.totalHours * 10) / 10,
-        target: MIN_WEEKLY_HOURS,
-      }));
-  }, [weeklyData]);
+    const source = chartWeeklyData.length ? chartWeeklyData : weeklyData;
+    const sorted = [...source].sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime());
+    const sliced = chartRange === 0 ? sorted : sorted.slice(-chartRange);
+    return sliced.map((w) => ({
+      week: w.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      hours: Math.round(w.totalHours * 10) / 10,
+      target: MIN_WEEKLY_HOURS,
+    }));
+  }, [chartWeeklyData, weeklyData, chartRange]);
 
   const currentWeek = weeklyData[0];
   const currentWeekHours = currentWeek?.totalHours || 0;
