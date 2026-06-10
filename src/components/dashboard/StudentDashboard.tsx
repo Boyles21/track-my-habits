@@ -100,6 +100,8 @@ export default function StudentDashboard() {
   const [recentEntries, setRecentEntries] = useState<LogbookEntry[]>([]);
   const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyHoursSummary[]>([]);
+  const [chartWeeklyData, setChartWeeklyData] = useState<WeeklyHoursSummary[]>([]);
+  const [chartRange, setChartRange] = useState<number>(8);
   const [stats, setStats] = useState<Stats>({
     totalEntries: 0,
     approvedEntries: 0,
@@ -143,6 +145,7 @@ export default function StudentDashboard() {
 
       const weekly = calculateWeeklyHours(allEntries || []);
       setWeeklyData(weekly);
+      setChartWeeklyData(calculateWeeklyHours(allEntries || [], { includeAllStatuses: true }));
       const weeklyViolations = weekly.filter((w) => w.hasViolation).length;
 
       const { count: docsCount } = await supabase
@@ -195,15 +198,15 @@ export default function StudentDashboard() {
   }, [stats.totalHours, weeklyData.length, remainingHours]);
 
   const chartData = useMemo(() => {
-    return [...weeklyData]
-      .reverse()
-      .slice(-8)
-      .map((w) => ({
-        week: w.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        hours: Math.round(w.totalHours * 10) / 10,
-        target: MIN_WEEKLY_HOURS,
-      }));
-  }, [weeklyData]);
+    const source = chartWeeklyData.length ? chartWeeklyData : weeklyData;
+    const sorted = [...source].sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime());
+    const sliced = chartRange === 0 ? sorted : sorted.slice(-chartRange);
+    return sliced.map((w) => ({
+      week: w.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      hours: Math.round(w.totalHours * 10) / 10,
+      target: MIN_WEEKLY_HOURS,
+    }));
+  }, [chartWeeklyData, weeklyData, chartRange]);
 
   const currentWeek = weeklyData[0];
   const currentWeekHours = currentWeek?.totalHours || 0;
@@ -439,7 +442,21 @@ export default function StudentDashboard() {
                   <TrendingUp className="h-4 w-4 text-primary" />
                   Weekly Hours Analytics
                 </span>
-                <Badge variant="outline" className="text-xs">Last {chartData.length || 0} weeks</Badge>
+                <div className="flex items-center gap-1">
+                  {[4, 8, 12, 0].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setChartRange(r)}
+                      className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                        chartRange === r
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {r === 0 ? "All" : `${r}w`}
+                    </button>
+                  ))}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
