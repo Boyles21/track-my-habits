@@ -145,6 +145,7 @@ export default function StudentDashboard() {
 
       const weekly = calculateWeeklyHours(allEntries || []);
       setWeeklyData(weekly);
+      setChartWeeklyData(calculateWeeklyHours(allEntries || [], { includeAllStatuses: true }));
       const weeklyViolations = weekly.filter((w) => w.hasViolation).length;
 
       const { count: docsCount } = await supabase
