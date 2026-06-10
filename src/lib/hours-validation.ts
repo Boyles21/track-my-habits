@@ -105,7 +105,8 @@ export function getWeekEnd(date: Date): Date {
  * Group entries by week and calculate weekly totals
  */
 export function calculateWeeklyHours(
-  entries: { entry_date: string; hours_worked: number | null; status: string }[]
+  entries: { entry_date: string; hours_worked: number | null; status: string }[],
+  options: { includeAllStatuses?: boolean } = {}
 ): WeeklyHoursSummary[] {
   const weeklyMap = new Map<string, WeeklyHoursSummary>();
   
@@ -125,8 +126,7 @@ export function calculateWeeklyHours(
     }
     
     const week = weeklyMap.get(weekKey)!;
-    // Only count approved entries for weekly totals
-    if (entry.status === 'approved') {
+    if (options.includeAllStatuses || entry.status === 'approved') {
       week.totalHours += entry.hours_worked || 0;
     }
     week.entries++;
