@@ -100,6 +100,8 @@ export default function StudentDashboard() {
   const [recentEntries, setRecentEntries] = useState<LogbookEntry[]>([]);
   const [recentDocs, setRecentDocs] = useState<DocumentItem[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyHoursSummary[]>([]);
+  const [chartWeeklyData, setChartWeeklyData] = useState<WeeklyHoursSummary[]>([]);
+  const [chartRange, setChartRange] = useState<number>(8);
   const [stats, setStats] = useState<Stats>({
     totalEntries: 0,
     approvedEntries: 0,
