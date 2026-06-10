@@ -199,11 +199,40 @@ export default function StudentDashboard() {
 
   const chartData = useMemo(() => {
     const source = chartWeeklyData.length ? chartWeeklyData : weeklyData;
-    const sorted = [...source].sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime());
-    const sliced = chartRange === 0 ? sorted : sorted.slice(-chartRange);
-    return sliced.map((w) => ({
-      week: w.weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      hours: Math.round(w.totalHours * 10) / 10,
+    const byKey = new Map<string, number>();
+    source.forEach((w) => byKey.set(w.weekStart.toISOString(), w.totalHours));
+
+    const getWeekStart = (d: Date) => {
+      const x = new Date(d);
+      const day = x.getDay();
+      x.setDate(x.getDate() - day + (day === 0 ? -6 : 1));
+      x.setHours(0, 0, 0, 0);
+      return x;
+    };
+
+    let weeks: Date[];
+    if (chartRange === 0) {
+      const sorted = [...source].sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime());
+      if (!sorted.length) return [];
+      weeks = [];
+      const cur = new Date(sorted[0].weekStart);
+      const end = getWeekStart(new Date());
+      while (cur <= end) {
+        weeks.push(new Date(cur));
+        cur.setDate(cur.getDate() + 7);
+      }
+    } else {
+      weeks = [];
+      const cur = getWeekStart(new Date());
+      for (let i = 0; i < chartRange; i++) {
+        weeks.unshift(new Date(cur));
+        cur.setDate(cur.getDate() - 7);
+      }
+    }
+
+    return weeks.map((w) => ({
+      week: w.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      hours: Math.round((byKey.get(w.toISOString()) || 0) * 10) / 10,
       target: MIN_WEEKLY_HOURS,
     }));
   }, [chartWeeklyData, weeklyData, chartRange]);
