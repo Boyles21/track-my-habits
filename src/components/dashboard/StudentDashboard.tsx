@@ -442,7 +442,21 @@ export default function StudentDashboard() {
                   <TrendingUp className="h-4 w-4 text-primary" />
                   Weekly Hours Analytics
                 </span>
-                <Badge variant="outline" className="text-xs">Last {chartData.length || 0} weeks</Badge>
+                <div className="flex items-center gap-1">
+                  {[4, 8, 12, 0].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setChartRange(r)}
+                      className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                        chartRange === r
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {r === 0 ? "All" : `${r}w`}
+                    </button>
+                  ))}
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
