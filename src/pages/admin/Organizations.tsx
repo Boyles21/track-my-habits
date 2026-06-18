@@ -22,8 +22,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Briefcase, Plus, Pencil, Trash2 } from "lucide-react";
+import { Briefcase, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface Organization {
   id: string;
@@ -32,6 +33,9 @@ interface Organization {
   industry: string | null;
   contact_email: string | null;
   contact_phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  geofence_radius: number;
   created_at: string;
 }
 
@@ -46,6 +50,9 @@ export default function Organizations() {
     industry: "",
     contact_email: "",
     contact_phone: "",
+    latitude: "",
+    longitude: "",
+    geofence_radius: "100",
   });
 
   useEffect(() => {
@@ -69,9 +76,28 @@ export default function Organizations() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast.error("Organization name is required");
+      return;
+    }
+
+    // Validate coordinates if both are provided
+    const lat = formData.latitude ? parseFloat(formData.latitude) : null;
+    const lng = formData.longitude ? parseFloat(formData.longitude) : null;
+
+    if ((lat !== null && lng === null) || (lat === null && lng !== null)) {
+      toast.error("Both latitude and longitude must be provided together");
+      return;
+    }
+
+    if (lat !== null && (lat < -90 || lat > 90)) {
+      toast.error("Latitude must be between -90 and 90");
+      return;
+    }
+
+    if (lng !== null && (lng < -180 || lng > 180)) {
+      toast.error("Longitude must be between -180 and 180");
       return;
     }
 
@@ -81,6 +107,9 @@ export default function Organizations() {
       industry: formData.industry || null,
       contact_email: formData.contact_email || null,
       contact_phone: formData.contact_phone || null,
+      latitude: lat,
+      longitude: lng,
+      geofence_radius: parseInt(formData.geofence_radius) || 100,
     };
 
     if (editingId) {
@@ -119,6 +148,9 @@ export default function Organizations() {
       industry: org.industry || "",
       contact_email: org.contact_email || "",
       contact_phone: org.contact_phone || "",
+      latitude: org.latitude !== null ? org.latitude.toString() : "",
+      longitude: org.longitude !== null ? org.longitude.toString() : "",
+      geofence_radius: org.geofence_radius?.toString() || "100",
     });
     setDialogOpen(true);
   };
@@ -138,7 +170,16 @@ export default function Organizations() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", industry: "", contact_email: "", contact_phone: "" });
+    setFormData({
+      name: "",
+      address: "",
+      industry: "",
+      contact_email: "",
+      contact_phone: "",
+      latitude: "",
+      longitude: "",
+      geofence_radius: "100",
+    });
     setEditingId(null);
     setDialogOpen(false);
   };
@@ -164,7 +205,7 @@ export default function Organizations() {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingId(null); setFormData({ name: "", address: "", industry: "", contact_email: "", contact_phone: "" }); }}>
+              <Button onClick={() => { setEditingId(null); setFormData({ name: "", address: "", industry: "", contact_email: "", contact_phone: "", latitude: "", longitude: "", geofence_radius: "100" }); }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Organization
               </Button>
@@ -226,6 +267,56 @@ export default function Organizations() {
                     />
                   </div>
                 </div>
+
+                {/* Geofence Location Section */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="text-sm font-medium">Attendance Location (Optional)</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Set GPS coordinates to enable geofence-based attendance verification for students placed at this organization.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="latitude">Latitude</Label>
+                      <Input
+                        id="latitude"
+                        type="number"
+                        step="any"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                        placeholder="e.g., 6.5244"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="longitude">Longitude</Label>
+                      <Input
+                        id="longitude"
+                        type="number"
+                        step="any"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                        placeholder="e.g., 3.3792"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="geofence_radius">Geofence Radius (meters)</Label>
+                    <Input
+                      id="geofence_radius"
+                      type="number"
+                      min="10"
+                      max="5000"
+                      value={formData.geofence_radius}
+                      onChange={(e) => setFormData({ ...formData, geofence_radius: e.target.value })}
+                      placeholder="100"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Students must be within this radius to check in. Default: 100m
+                    </p>
+                  </div>
+                </div>
                 <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
@@ -259,6 +350,7 @@ export default function Organizations() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Industry</TableHead>
+                    <TableHead>Geofence</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -270,6 +362,17 @@ export default function Organizations() {
                       <TableCell className="font-medium">{org.name}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {org.industry || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {org.latitude !== null && org.longitude !== null ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                            {org.geofence_radius}m radius
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700">
+                            Not configured
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {org.contact_email || org.contact_phone || "-"}

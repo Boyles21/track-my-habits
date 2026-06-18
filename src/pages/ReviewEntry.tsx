@@ -23,7 +23,7 @@ import {
 import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award, AlertTriangle, Ban, MapPin, ExternalLink } from "lucide-react";
 import SkillValidation from "@/components/logbook/SkillValidation";
 import { MAX_DAILY_HOURS, formatHours } from "@/lib/hours-validation";
-import { getMapsLink } from "@/lib/geocoding";
+import { getMapsLink, formatDistance } from "@/lib/geofencing";
 
 interface Entry {
   id: string;
@@ -35,13 +35,15 @@ interface Entry {
   status: string;
   student_id: string;
   student_name: string;
+  organization_name: string | null;
   start_time: string | null;
   end_time: string | null;
   has_violation: boolean | null;
   violation_type: string | null;
   check_in_lat: number | null;
   check_in_lng: number | null;
-  check_in_address: string | null;
+  geofence_valid: boolean | null;
+  distance_meters: number | null;
   check_in_accuracy: number | null;
   check_in_at: string | null;
 }
@@ -126,6 +128,19 @@ export default function ReviewEntry() {
         .eq("id", entryData.student_id)
         .maybeSingle();
 
+      // Step 4: Fetch organization name from student_placements
+      let organizationName: string | null = null;
+      const { data: placement } = await supabase
+        .from("student_placements")
+        .select("organization_id, organizations(name)")
+        .eq("student_id", entryData.student_id)
+        .maybeSingle();
+
+      if (placement) {
+        const orgData = placement.organizations as { name: string } | null;
+        organizationName = orgData?.name || null;
+      }
+
       setEntry({
         id: entryData.id,
         entry_date: entryData.entry_date,
@@ -136,13 +151,15 @@ export default function ReviewEntry() {
         status: entryData.status,
         student_id: entryData.student_id,
         student_name: studentProfile?.full_name || "Unknown",
+        organization_name: organizationName,
         start_time: entryData.start_time,
         end_time: entryData.end_time,
         has_violation: entryData.has_violation,
         violation_type: entryData.violation_type,
         check_in_lat: entryData.check_in_lat,
         check_in_lng: entryData.check_in_lng,
-        check_in_address: entryData.check_in_address,
+        geofence_valid: entryData.geofence_valid,
+        distance_meters: entryData.distance_meters,
         check_in_accuracy: entryData.check_in_accuracy,
         check_in_at: entryData.check_in_at,
       });
@@ -443,18 +460,37 @@ export default function ReviewEntry() {
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-foreground mb-1">Location Check-in</h3>
-                    {entry.check_in_address ? (
+                    {entry.organization_name ? (
                       <p className="text-sm text-foreground mb-1">
-                        {entry.check_in_address}
+                        {entry.organization_name}
                       </p>
                     ) : (
                       <p className="text-sm text-muted-foreground italic mb-1">
-                        Address not resolved
+                        No organization assigned
+                      </p>
+                    )}
+                    {/* Geofence validation result */}
+                    {entry.geofence_valid !== null && (
+                      <div className="flex items-center gap-2 mt-1 mb-1">
+                        {entry.geofence_valid ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                            Inside attendance zone
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                            Outside attendance zone
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    {entry.distance_meters !== null && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Distance from organization: {formatDistance(entry.distance_meters)}
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       {entry.check_in_lat.toFixed(5)}, {entry.check_in_lng.toFixed(5)}
-                      {entry.check_in_accuracy && ` (±${Math.round(entry.check_in_accuracy)}m)`}
+                      {entry.check_in_accuracy != null && ` (±${Math.round(entry.check_in_accuracy)}m)`}
                       {entry.check_in_at && ` · ${new Date(entry.check_in_at).toLocaleTimeString()}`}
                     </p>
                     <Button
@@ -472,6 +508,20 @@ export default function ReviewEntry() {
                         <ExternalLink className="h-3 w-3 ml-1" />
                       </a>
                     </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Show message if no location captured */}
+            {(!entry.check_in_lat || !entry.check_in_lng) && (
+              <div className="border-t pt-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Location Check-in</h3>
+                    <p className="text-sm text-muted-foreground italic">
+                      Location not captured
+                    </p>
                   </div>
                 </div>
               </div>
