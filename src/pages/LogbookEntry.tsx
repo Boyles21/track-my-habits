@@ -11,7 +11,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -21,7 +20,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2, ExternalLink, AlertTriangle, XCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import SkillPicker from "@/components/logbook/SkillPicker";
 import HoursValidationWarning from "@/components/logbook/HoursValidationWarning";
@@ -32,16 +31,7 @@ import {
   formatHours,
   HoursViolation,
 } from "@/lib/hours-validation";
-import {
-  getCurrentPosition,
-  validateGpsAccuracy,
-  detectFakeGps,
-  processGeofenceValidation,
-  formatDistance,
-  getMapsLink,
-  OrganizationLocation,
-  hasValidGeofence,
-} from "@/lib/geofencing";
+import { reverseGeocode, formatLocationDisplay, getMapsLink } from "@/lib/geocoding";
 
 const entrySchema = z.object({
   entry_date: z.string().min(1, "Date is required"),
@@ -63,17 +53,6 @@ const entrySchema = z.object({
 
 type EntryFormValues = z.infer<typeof entrySchema>;
 
-interface GeofenceCheckIn {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  at: string;
-  organizationName: string;
-  distanceMeters: number;
-  isInside: boolean;
-  radius: number;
-}
-
 export default function LogbookEntry() {
   const { id } = useParams();
   const isEditing = id && id !== "new";
@@ -85,10 +64,54 @@ export default function LogbookEntry() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [calculatedHours, setCalculatedHours] = useState<number>(0);
   const [hoursViolation, setHoursViolation] = useState<HoursViolation | null>(null);
-  const [organization, setOrganization] = useState<OrganizationLocation | null>(null);
-  const [checkIn, setCheckIn] = useState<GeofenceCheckIn | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string; address?: string | null } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
-  const [locError, setLocError] = useState<string | null>(null);
+  const [geocodingLocation, setGeocodingLocation] = useState(false);
+
+  const captureLocation = async () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const newLocation = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          at: new Date().toISOString(),
+          address: null as string | null,
+        };
+
+        // Attempt to resolve address via reverse geocoding
+        setGeocodingLocation(true);
+        try {
+          const address = await reverseGeocode(newLocation);
+          newLocation.address = address;
+        } catch (err) {
+          console.error('[v0] Geocoding failed:', err);
+          // Continue with coordinates only if geocoding fails
+        } finally {
+          setGeocodingLocation(false);
+        }
+
+        setLocation(newLocation);
+        setLocLoading(false);
+        
+        if (newLocation.address) {
+          toast.success("Location captured and verified");
+        } else {
+          toast.success("Location captured (address verification pending)");
+        }
+      },
+      (err) => {
+        setLocLoading(false);
+        toast.error(err.message || "Could not get location");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entrySchema),
@@ -123,138 +146,10 @@ export default function LogbookEntry() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchOrganization();
-    }
-  }, [user]);
-
-  useEffect(() => {
     if (isEditing && user) {
       fetchEntry();
     }
   }, [isEditing, user]);
-
-  const fetchOrganization = async () => {
-    try {
-      // Get student's placement organization
-      const { data: placement } = await supabase
-        .from("student_placements")
-        .select("organization_id")
-        .eq("student_id", user?.id)
-        .eq("status", "active")
-        .maybeSingle();
-
-      if (!placement?.organization_id) {
-        setOrganization(null);
-        return;
-      }
-
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("id, name, latitude, longitude, geofence_radius")
-        .eq("id", placement.organization_id)
-        .maybeSingle();
-
-      if (org) {
-        setOrganization({
-          id: org.id,
-          name: org.name,
-          latitude: org.latitude,
-          longitude: org.longitude,
-          geofence_radius: org.geofence_radius || 100,
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching organization:", error);
-    }
-  };
-
-  const captureLocation = async () => {
-    setLocLoading(true);
-    setLocError(null);
-
-    try {
-      // Step 1: Get user's current GPS position
-      const position = await getCurrentPosition();
-      const { latitude, longitude, accuracy } = position.coords;
-
-      // Step 2: Detect potential fake / mock GPS — warn but do not block here
-      // (server-side trigger is the authoritative enforcement layer)
-      const fakeWarnings = detectFakeGps(position);
-      if (fakeWarnings.length > 0) {
-        console.warn("Potential fake GPS detected:", fakeWarnings);
-      }
-
-      // Step 3: Validate GPS accuracy — BLOCK if too poor
-      const accuracyError = validateGpsAccuracy(accuracy, 30);
-      if (accuracyError) {
-        setLocError(accuracyError);
-        toast.error(accuracyError);
-        setLocLoading(false);
-        return;
-      }
-
-      // Step 4: Pre-flight checks for org / geofence config
-      if (!organization) {
-        setLocError("No organization assigned. Contact your supervisor or admin.");
-        toast.error("No organization assigned for attendance verification");
-        setLocLoading(false);
-        return;
-      }
-
-      if (!hasValidGeofence(organization)) {
-        setLocError(`${organization.name} has not configured attendance location. Contact admin.`);
-        toast.error("Organization location not configured. Contact admin.");
-        setLocLoading(false);
-        return;
-      }
-
-      // Step 5: Run client-side geofence check (for immediate UX feedback)
-      const validation = processGeofenceValidation(
-        { lat: latitude, lng: longitude },
-        accuracy,
-        organization,
-      );
-
-      // Surface any accuracy / config warnings
-      validation.warnings.forEach((w) => toast.warning(w));
-
-      if (!validation.isValid && validation.error) {
-        setLocError(validation.error);
-        toast.error(validation.error);
-        setLocLoading(false);
-        return;
-      }
-
-      const newCheckIn: GeofenceCheckIn = {
-        lat: latitude,
-        lng: longitude,
-        accuracy,
-        at: new Date().toISOString(),
-        organizationName: organization.name,
-        distanceMeters: validation.distance ?? 0,
-        isInside: validation.isInside,
-        radius: organization.geofence_radius,
-      };
-
-      setCheckIn(newCheckIn);
-
-      if (validation.isInside) {
-        toast.success(
-          `Attendance verified — within ${formatDistance(validation.distance!)} of ${organization.name}`,
-        );
-      } else {
-        toast.error(
-          `Outside attendance zone. Distance: ${formatDistance(validation.distance!)} (Allowed: ${organization.geofence_radius} m)`,
-        );
-      }
-    } catch (err: any) {
-      setLocError(err.message || "Failed to capture location");
-      toast.error(err.message || "Failed to capture location");
-    } finally {
-      setLocLoading(false);
-    }
-  };
 
   const fetchEntry = async () => {
     try {
@@ -299,17 +194,13 @@ export default function LogbookEntry() {
         setSelectedSkills(entrySkills.map((es) => es.skill_id));
       }
 
-      // Restore previous check-in data if available
-      if (data.check_in_lat != null && data.check_in_lng != null && organization) {
-        setCheckIn({
+      if (data.check_in_lat != null && data.check_in_lng != null) {
+        setLocation({
           lat: data.check_in_lat,
           lng: data.check_in_lng,
           accuracy: data.check_in_accuracy ?? 0,
           at: data.check_in_at ?? new Date().toISOString(),
-          organizationName: organization.name,
-          distanceMeters: data.distance_meters ?? 0,
-          isInside: data.geofence_valid ?? false,
-          radius: organization.geofence_radius,
+          address: data.check_in_address,
         });
       }
     } catch (error) {
@@ -337,26 +228,6 @@ export default function LogbookEntry() {
       const hasViolation = hours > MAX_DAILY_HOURS;
       const violationType = hasViolation ? 'max_hours_exceeded' : null;
 
-      const entryData: Record<string, any> = {
-        entry_date: data.entry_date,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        hours_worked: hours,
-        activity_description: data.activity_description,
-        skills_learned: data.skills_learned || null,
-        challenges: data.challenges || null,
-        has_violation: hasViolation,
-        violation_type: violationType,
-        check_in_lat: checkIn?.lat ?? null,
-        check_in_lng: checkIn?.lng ?? null,
-        check_in_accuracy: checkIn?.accuracy ?? null,
-        check_in_at: checkIn?.at ?? null,
-        check_in_address: checkIn?.organizationName ?? null,
-        distance_meters: checkIn?.distanceMeters ?? null,
-        geofence_valid: checkIn?.isInside ?? null,
-        status: "pending",
-      };
-
       if (isEditing) {
         // Double-check entry is not approved before updating
         const { data: currentEntry } = await supabase
@@ -374,7 +245,24 @@ export default function LogbookEntry() {
 
         const { error } = await supabase
           .from("logbook_entries")
-          .update(entryData)
+          .update({
+            entry_date: data.entry_date,
+            start_time: data.start_time,
+            end_time: data.end_time,
+            hours_worked: hours,
+            activity_description: data.activity_description,
+            skills_learned: data.skills_learned || null,
+            challenges: data.challenges || null,
+            has_violation: hasViolation,
+            violation_type: violationType,
+            check_in_lat: location?.lat ?? null,
+            check_in_lng: location?.lng ?? null,
+            check_in_accuracy: location?.accuracy ?? null,
+            check_in_at: location?.at ?? null,
+            check_in_address: location?.address ?? null,
+            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
+            status: "pending", // Reset to pending when resubmitting
+          })
           .eq("id", id)
           .eq("student_id", user.id);
 
@@ -382,7 +270,7 @@ export default function LogbookEntry() {
 
         // Update entry skills - delete old ones and insert new ones
         await supabase.from("entry_skills").delete().eq("entry_id", id);
-
+        
         if (selectedSkills.length > 0) {
           const skillInserts = selectedSkills.map((skillId) => ({
             entry_id: id as string,
@@ -397,7 +285,21 @@ export default function LogbookEntry() {
           .from("logbook_entries")
           .insert({
             student_id: user.id,
-            ...entryData,
+            entry_date: data.entry_date,
+            start_time: data.start_time,
+            end_time: data.end_time,
+            hours_worked: hours,
+            activity_description: data.activity_description,
+            skills_learned: data.skills_learned || null,
+            challenges: data.challenges || null,
+            has_violation: hasViolation,
+            violation_type: violationType,
+            check_in_lat: location?.lat ?? null,
+            check_in_lng: location?.lng ?? null,
+            check_in_accuracy: location?.accuracy ?? null,
+            check_in_at: location?.at ?? null,
+            check_in_address: location?.address ?? null,
+            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
           })
           .select("id")
           .single();
@@ -598,14 +500,8 @@ export default function LogbookEntry() {
                   )}
                 />
 
-                {/* Attendance Check-in with Geofencing */}
-                <div className={`p-4 rounded-lg border space-y-3 ${
-                  checkIn && !checkIn.isInside
-                    ? 'border-destructive/50 bg-destructive/5'
-                    : checkIn
-                      ? 'border-success/50 bg-success/5'
-                      : 'bg-secondary/50'
-                }`}>
+                {/* Location check-in */}
+                <div className="p-4 rounded-lg border bg-secondary/50 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -613,145 +509,65 @@ export default function LogbookEntry() {
                     </div>
                     <Button
                       type="button"
-                      variant={checkIn ? "outline" : "default"}
+                      variant={location ? "outline" : "default"}
                       size="sm"
                       onClick={captureLocation}
-                      disabled={locLoading || isLoading}
+                      disabled={locLoading || geocodingLocation || isLoading}
                     >
-                      {locLoading ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Capturing...</>
-                      ) : checkIn ? (
+                      {locLoading || geocodingLocation ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{geocodingLocation ? "Verifying..." : "Getting..."}</>
+                      ) : location ? (
                         <><CheckCircle2 className="mr-2 h-4 w-4" />Recapture</>
                       ) : (
-                        "Check In"
+                        "Capture Location"
                       )}
                     </Button>
                   </div>
-
-                  {/* No organization assigned */}
-                  {!organization && (
-                    <div className="flex items-start gap-2 p-3 rounded-md bg-muted">
-                      <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">No organization assigned</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Contact your supervisor or administrator to assign you to an organization for attendance verification.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Organization without geofence */}
-                  {organization && !hasValidGeofence(organization) && (
-                    <div className="flex items-start gap-2 p-3 rounded-md bg-muted">
-                      <AlertTriangle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{organization.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          This organization has not configured attendance location. Contact the administrator.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Location error */}
-                  {locError && (
-                    <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10">
-                      <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-                      <p className="text-sm text-destructive">{locError}</p>
-                    </div>
-                  )}
-
-                  {/* Check-in result */}
-                  {checkIn && (
-                    <div className="space-y-3">
-                      {/* Organization name */}
+                  {location ? (
+                    <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <p className="text-xs text-muted-foreground">Organization</p>
-                          <p className="text-sm font-semibold text-foreground">
-                            {checkIn.organizationName}
+                          <p className="text-sm font-medium text-foreground">
+                            {location.address || "Address verification pending..."}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m)
                           </p>
                         </div>
-                        {checkIn.isInside ? (
-                          <Badge className="bg-success/10 text-success border-success/20">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Inside Zone
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Outside Zone
-                          </Badge>
+                        {location.lat && location.lng && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="shrink-0"
+                          >
+                            <a
+                              href={getMapsLink(location.lat, location.lng)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="View on map"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
                         )}
                       </div>
-
-                      {/* Distance info */}
-                      <div className="grid grid-cols-2 gap-4 p-3 rounded-md bg-muted/50">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Current Distance</p>
-                          <p className={`text-lg font-semibold ${checkIn.isInside ? 'text-success' : 'text-destructive'}`}>
-                            {formatDistance(checkIn.distanceMeters)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Allowed Radius</p>
-                          <p className="text-lg font-semibold text-foreground">
-                            {checkIn.radius} m
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* GPS accuracy */}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          GPS: {checkIn.lat.toFixed(5)}, {checkIn.lng.toFixed(5)} (±{Math.round(checkIn.accuracy)}m)
-                        </span>
-                        <span>
-                          Captured at {new Date(checkIn.at).toLocaleTimeString()}
-                        </span>
-                      </div>
-
-                      {/* Map link */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="w-full"
-                      >
-                        <a
-                          href={getMapsLink(checkIn.lat, checkIn.lng)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View on Map
-                        </a>
-                      </Button>
-
-                      {/* Warning if outside zone */}
-                      {!checkIn.isInside && (
-                        <p className="text-xs text-destructive text-center">
-                          You must be within {checkIn.radius}m of {checkIn.organizationName} to verify attendance.
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Captured at {new Date(location.at).toLocaleTimeString()}
+                      </p>
                     </div>
-                  )}
-
-                  {/* Initial prompt */}
-                  {!checkIn && !locError && organization && hasValidGeofence(organization) && (
+                  ) : (
                     <p className="text-xs text-muted-foreground">
-                      Click "Check In" to verify you're at {organization.name}.
-                      Attendance must be within {organization.geofence_radius}m of the registered location.
+                      Verify you're at your internship site. Optional but recommended.
                     </p>
                   )}
                 </div>
 
                 <div className="flex gap-4">
-                  <Button
-                    type="submit"
-                    className="flex-1"
+                  <Button 
+                    type="submit" 
+                    className="flex-1" 
                     disabled={isLoading || (hoursViolation?.severity === 'error')}
                   >
                     {isLoading ? (

@@ -191,12 +191,9 @@ export type Database = {
           check_in_at: string | null
           check_in_lat: number | null
           check_in_lng: number | null
-          check_in_address: string | null
           created_at: string
-          distance_meters: number | null
           end_time: string | null
           entry_date: string
-          geofence_valid: boolean | null
           has_violation: boolean | null
           hours_worked: number | null
           id: string
@@ -216,12 +213,9 @@ export type Database = {
           check_in_at?: string | null
           check_in_lat?: number | null
           check_in_lng?: number | null
-          check_in_address?: string | null
           created_at?: string
-          distance_meters?: number | null
           end_time?: string | null
           entry_date: string
-          geofence_valid?: boolean | null
           has_violation?: boolean | null
           hours_worked?: number | null
           id?: string
@@ -241,12 +235,9 @@ export type Database = {
           check_in_at?: string | null
           check_in_lat?: number | null
           check_in_lng?: number | null
-          check_in_address?: string | null
           created_at?: string
-          distance_meters?: number | null
           end_time?: string | null
           entry_date?: string
-          geofence_valid?: boolean | null
           has_violation?: boolean | null
           hours_worked?: number | null
           id?: string
@@ -305,9 +296,6 @@ export type Database = {
           industry: string | null
           name: string
           updated_at: string
-          latitude: number | null
-          longitude: number | null
-          geofence_radius: number | null
         }
         Insert: {
           address?: string | null
@@ -318,9 +306,6 @@ export type Database = {
           industry?: string | null
           name: string
           updated_at?: string
-          latitude?: number | null
-          longitude?: number | null
-          geofence_radius?: number | null
         }
         Update: {
           address?: string | null
@@ -331,9 +316,6 @@ export type Database = {
           industry?: string | null
           name?: string
           updated_at?: string
-          latitude?: number | null
-          longitude?: number | null
-          geofence_radius?: number | null
         }
         Relationships: []
       }

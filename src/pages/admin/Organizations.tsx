@@ -22,16 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Briefcase, Plus, Pencil, Trash2, MapPin, Navigation, ExternalLink, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Briefcase, Plus, Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  getCurrentPosition,
-  validateGeofenceConfig,
-  getMapsLink,
-  MIN_GEOFENCE_RADIUS,
-  MAX_GEOFENCE_RADIUS,
-} from "@/lib/geofencing";
 
 interface Organization {
   id: string;
@@ -40,31 +32,21 @@ interface Organization {
   industry: string | null;
   contact_email: string | null;
   contact_phone: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  geofence_radius: number;
   created_at: string;
 }
-
-const BLANK_FORM = {
-  name: "",
-  address: "",
-  industry: "",
-  contact_email: "",
-  contact_phone: "",
-  latitude: "",
-  longitude: "",
-  geofence_radius: "100",
-};
 
 export default function Organizations() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState(BLANK_FORM);
-  const [locLoading, setLocLoading] = useState(false);
-  const [geofenceError, setGeofenceError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+    industry: "",
+    contact_email: "",
+    contact_phone: "",
+  });
 
   useEffect(() => {
     fetchOrganizations();
@@ -85,62 +67,20 @@ export default function Organizations() {
     setLoading(false);
   };
 
-  const handleUseMyLocation = async () => {
-    setLocLoading(true);
-    try {
-      const position = await getCurrentPosition();
-      const { latitude, longitude, accuracy } = position.coords;
-      setFormData((prev) => ({
-        ...prev,
-        latitude: latitude.toFixed(6),
-        longitude: longitude.toFixed(6),
-      }));
-      toast.success(
-        `Location captured (GPS accuracy: ±${Math.round(accuracy)} m). Verify the coordinates are correct.`,
-      );
-    } catch (err: any) {
-      toast.error(err.message || "Failed to get current location");
-    } finally {
-      setLocLoading(false);
-    }
-  };
-
-  // Revalidate geofence config whenever relevant fields change
-  const lat = formData.latitude ? parseFloat(formData.latitude) : null;
-  const lng = formData.longitude ? parseFloat(formData.longitude) : null;
-  const radius = formData.geofence_radius ? parseInt(formData.geofence_radius, 10) : null;
-  const hasCoords = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
-  const previewMapsUrl = hasCoords ? getMapsLink(lat!, lng!) : null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!formData.name.trim()) {
       toast.error("Organization name is required");
       return;
     }
 
-    const latVal = formData.latitude ? parseFloat(formData.latitude) : null;
-    const lngVal = formData.longitude ? parseFloat(formData.longitude) : null;
-    const radVal = formData.geofence_radius ? parseInt(formData.geofence_radius, 10) : null;
-
-    const geoError = validateGeofenceConfig(latVal, lngVal, radVal);
-    if (geoError) {
-      toast.error(geoError);
-      setGeofenceError(geoError);
-      return;
-    }
-    setGeofenceError(null);
-
     const payload = {
-      name: formData.name.trim(),
-      address: formData.address.trim() || null,
-      industry: formData.industry.trim() || null,
-      contact_email: formData.contact_email.trim() || null,
-      contact_phone: formData.contact_phone.trim() || null,
-      latitude: latVal,
-      longitude: lngVal,
-      geofence_radius: radVal ?? 100,
+      name: formData.name,
+      address: formData.address || null,
+      industry: formData.industry || null,
+      contact_email: formData.contact_email || null,
+      contact_phone: formData.contact_phone || null,
     };
 
     if (editingId) {
@@ -150,7 +90,7 @@ export default function Organizations() {
         .eq("id", editingId);
 
       if (error) {
-        toast.error(error.message || "Failed to update organization");
+        toast.error("Failed to update organization");
         console.error(error);
       } else {
         toast.success("Organization updated successfully");
@@ -161,7 +101,7 @@ export default function Organizations() {
       const { error } = await supabase.from("organizations").insert(payload);
 
       if (error) {
-        toast.error(error.message || "Failed to create organization");
+        toast.error("Failed to create organization");
         console.error(error);
       } else {
         toast.success("Organization created successfully");
@@ -173,16 +113,12 @@ export default function Organizations() {
 
   const handleEdit = (org: Organization) => {
     setEditingId(org.id);
-    setGeofenceError(null);
     setFormData({
       name: org.name,
       address: org.address || "",
       industry: org.industry || "",
       contact_email: org.contact_email || "",
       contact_phone: org.contact_phone || "",
-      latitude: org.latitude !== null ? org.latitude.toString() : "",
-      longitude: org.longitude !== null ? org.longitude.toString() : "",
-      geofence_radius: org.geofence_radius?.toString() || "100",
     });
     setDialogOpen(true);
   };
@@ -202,9 +138,8 @@ export default function Organizations() {
   };
 
   const resetForm = () => {
-    setFormData(BLANK_FORM);
+    setFormData({ name: "", address: "", industry: "", contact_email: "", contact_phone: "" });
     setEditingId(null);
-    setGeofenceError(null);
     setDialogOpen(false);
   };
 
@@ -227,14 +162,14 @@ export default function Organizations() {
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Organizations</h1>
             <p className="text-muted-foreground">Manage SIWES placement companies</p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingId(null); setFormData(BLANK_FORM); setGeofenceError(null); }}>
+              <Button onClick={() => { setEditingId(null); setFormData({ name: "", address: "", industry: "", contact_email: "", contact_phone: "" }); }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Organization
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>
                   {editingId ? "Edit Organization" : "Add Organization"}
@@ -291,130 +226,7 @@ export default function Organizations() {
                     />
                   </div>
                 </div>
-
-                {/* Geofence Location Section */}
-                <div className="border-t pt-4 mt-2 space-y-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <h4 className="text-sm font-semibold">Attendance Location</h4>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleUseMyLocation}
-                      disabled={locLoading}
-                      className="text-xs"
-                    >
-                      <Navigation className={`h-3.5 w-3.5 mr-1.5 ${locLoading ? "animate-spin" : ""}`} />
-                      {locLoading ? "Locating…" : "Use My Location"}
-                    </Button>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground -mt-2">
-                    Students must be within the configured radius to verify attendance.
-                    Leave blank to disable geofence for this organization.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="latitude">Latitude</Label>
-                      <Input
-                        id="latitude"
-                        type="number"
-                        step="any"
-                        min="-90"
-                        max="90"
-                        value={formData.latitude}
-                        onChange={(e) => {
-                          setFormData({ ...formData, latitude: e.target.value });
-                          setGeofenceError(null);
-                        }}
-                        placeholder="e.g., 6.5244"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="longitude">Longitude</Label>
-                      <Input
-                        id="longitude"
-                        type="number"
-                        step="any"
-                        min="-180"
-                        max="180"
-                        value={formData.longitude}
-                        onChange={(e) => {
-                          setFormData({ ...formData, longitude: e.target.value });
-                          setGeofenceError(null);
-                        }}
-                        placeholder="e.g., 3.3792"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="geofence_radius">
-                      Radius (metres)
-                      <span className="text-muted-foreground text-xs ml-2">
-                        ({MIN_GEOFENCE_RADIUS}–{MAX_GEOFENCE_RADIUS} m)
-                      </span>
-                    </Label>
-                    <Input
-                      id="geofence_radius"
-                      type="number"
-                      min={MIN_GEOFENCE_RADIUS}
-                      max={MAX_GEOFENCE_RADIUS}
-                      value={formData.geofence_radius}
-                      onChange={(e) => {
-                        setFormData({ ...formData, geofence_radius: e.target.value });
-                        setGeofenceError(null);
-                      }}
-                      placeholder="100"
-                    />
-                    {radius && radius >= MIN_GEOFENCE_RADIUS && radius <= MAX_GEOFENCE_RADIUS && (
-                      <p className="text-xs text-muted-foreground">
-                        Students within <strong>{radius} m</strong> of the pin will be allowed to check in.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Validation error */}
-                  {geofenceError && (
-                    <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                      <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-                      <p className="text-sm text-destructive">{geofenceError}</p>
-                    </div>
-                  )}
-
-                  {/* Coordinate preview */}
-                  {hasCoords && !geofenceError && (
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-success/10 border border-success/20">
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-success">Coordinates set</p>
-                        <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                          {lat!.toFixed(6)}, {lng!.toFixed(6)}
-                        </p>
-                      </div>
-                      {previewMapsUrl && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                          className="h-7 text-xs"
-                        >
-                          <a href={previewMapsUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                            Preview
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2 justify-end pt-2">
+                <div className="flex gap-2 justify-end">
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Cancel
                   </Button>
@@ -447,7 +259,6 @@ export default function Organizations() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Industry</TableHead>
-                    <TableHead>Geofence</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -459,31 +270,6 @@ export default function Organizations() {
                       <TableCell className="font-medium">{org.name}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {org.industry || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {org.latitude !== null && org.longitude !== null ? (
-                          <a
-                            href={getMapsLink(org.latitude, org.longitude)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex"
-                          >
-                            <Badge
-                              variant="outline"
-                              className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800 hover:bg-green-100 cursor-pointer gap-1"
-                            >
-                              <MapPin className="h-3 w-3" />
-                              {org.geofence_radius} m
-                            </Badge>
-                          </a>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700"
-                          >
-                            Not configured
-                          </Badge>
-                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {org.contact_email || org.contact_phone || "-"}
