@@ -232,6 +232,10 @@ export default function LogbookEntry() {
             challenges: data.challenges || null,
             has_violation: hasViolation,
             violation_type: violationType,
+            check_in_lat: location?.lat ?? null,
+            check_in_lng: location?.lng ?? null,
+            check_in_accuracy: location?.accuracy ?? null,
+            check_in_at: location?.at ?? null,
             status: "pending", // Reset to pending when resubmitting
           })
           .eq("id", id)
