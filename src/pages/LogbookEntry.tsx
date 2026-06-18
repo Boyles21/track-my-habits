@@ -473,6 +473,40 @@ export default function LogbookEntry() {
                   )}
                 />
 
+                {/* Location check-in */}
+                <div className="p-4 rounded-lg border bg-secondary/50 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">Attendance Check-in</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={location ? "outline" : "default"}
+                      size="sm"
+                      onClick={captureLocation}
+                      disabled={locLoading || isLoading}
+                    >
+                      {locLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Getting...</>
+                      ) : location ? (
+                        <><CheckCircle2 className="mr-2 h-4 w-4" />Recapture</>
+                      ) : (
+                        "Capture Location"
+                      )}
+                    </Button>
+                  </div>
+                  {location ? (
+                    <p className="text-xs text-muted-foreground">
+                      📍 {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m) · {new Date(location.at).toLocaleTimeString()}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Verify you're at your internship site. Optional but recommended.
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex gap-4">
                   <Button 
                     type="submit" 
