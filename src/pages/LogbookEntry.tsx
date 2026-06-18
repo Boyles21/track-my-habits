@@ -63,6 +63,33 @@ export default function LogbookEntry() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [calculatedHours, setCalculatedHours] = useState<number>(0);
   const [hoursViolation, setHoursViolation] = useState<HoursViolation | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string } | null>(null);
+  const [locLoading, setLocLoading] = useState(false);
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          at: new Date().toISOString(),
+        });
+        setLocLoading(false);
+        toast.success("Location captured");
+      },
+      (err) => {
+        setLocLoading(false);
+        toast.error(err.message || "Could not get location");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entrySchema),
