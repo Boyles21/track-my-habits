@@ -20,7 +20,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Loader2, ArrowLeft, Clock } from "lucide-react";
+import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SkillPicker from "@/components/logbook/SkillPicker";
 import HoursValidationWarning from "@/components/logbook/HoursValidationWarning";
