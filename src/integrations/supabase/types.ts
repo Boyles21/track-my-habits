@@ -187,6 +187,10 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           challenges: string | null
+          check_in_accuracy: number | null
+          check_in_at: string | null
+          check_in_lat: number | null
+          check_in_lng: number | null
           created_at: string
           end_time: string | null
           entry_date: string
@@ -205,6 +209,10 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           challenges?: string | null
+          check_in_accuracy?: number | null
+          check_in_at?: string | null
+          check_in_lat?: number | null
+          check_in_lng?: number | null
           created_at?: string
           end_time?: string | null
           entry_date: string
@@ -223,6 +231,10 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           challenges?: string | null
+          check_in_accuracy?: number | null
+          check_in_at?: string | null
+          check_in_lat?: number | null
+          check_in_lng?: number | null
           created_at?: string
           end_time?: string | null
           entry_date?: string

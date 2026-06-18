@@ -20,7 +20,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Loader2, ArrowLeft, Clock } from "lucide-react";
+import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import SkillPicker from "@/components/logbook/SkillPicker";
 import HoursValidationWarning from "@/components/logbook/HoursValidationWarning";
@@ -63,6 +63,33 @@ export default function LogbookEntry() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [calculatedHours, setCalculatedHours] = useState<number>(0);
   const [hoursViolation, setHoursViolation] = useState<HoursViolation | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string } | null>(null);
+  const [locLoading, setLocLoading] = useState(false);
+
+  const captureLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
+    setLocLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          at: new Date().toISOString(),
+        });
+        setLocLoading(false);
+        toast.success("Location captured");
+      },
+      (err) => {
+        setLocLoading(false);
+        toast.error(err.message || "Could not get location");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const form = useForm<EntryFormValues>({
     resolver: zodResolver(entrySchema),
@@ -144,6 +171,15 @@ export default function LogbookEntry() {
       if (entrySkills) {
         setSelectedSkills(entrySkills.map((es) => es.skill_id));
       }
+
+      if (data.check_in_lat != null && data.check_in_lng != null) {
+        setLocation({
+          lat: data.check_in_lat,
+          lng: data.check_in_lng,
+          accuracy: data.check_in_accuracy ?? 0,
+          at: data.check_in_at ?? new Date().toISOString(),
+        });
+      }
     } catch (error) {
       console.error("Error fetching entry:", error);
       toast.error("Failed to load entry");
@@ -196,6 +232,10 @@ export default function LogbookEntry() {
             challenges: data.challenges || null,
             has_violation: hasViolation,
             violation_type: violationType,
+            check_in_lat: location?.lat ?? null,
+            check_in_lng: location?.lng ?? null,
+            check_in_accuracy: location?.accuracy ?? null,
+            check_in_at: location?.at ?? null,
             status: "pending", // Reset to pending when resubmitting
           })
           .eq("id", id)
@@ -229,6 +269,10 @@ export default function LogbookEntry() {
             challenges: data.challenges || null,
             has_violation: hasViolation,
             violation_type: violationType,
+            check_in_lat: location?.lat ?? null,
+            check_in_lng: location?.lng ?? null,
+            check_in_accuracy: location?.accuracy ?? null,
+            check_in_at: location?.at ?? null,
           })
           .select("id")
           .single();
@@ -428,6 +472,40 @@ export default function LogbookEntry() {
                     </FormItem>
                   )}
                 />
+
+                {/* Location check-in */}
+                <div className="p-4 rounded-lg border bg-secondary/50 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">Attendance Check-in</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={location ? "outline" : "default"}
+                      size="sm"
+                      onClick={captureLocation}
+                      disabled={locLoading || isLoading}
+                    >
+                      {locLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Getting...</>
+                      ) : location ? (
+                        <><CheckCircle2 className="mr-2 h-4 w-4" />Recapture</>
+                      ) : (
+                        "Capture Location"
+                      )}
+                    </Button>
+                  </div>
+                  {location ? (
+                    <p className="text-xs text-muted-foreground">
+                      📍 {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m) · {new Date(location.at).toLocaleTimeString()}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Verify you're at your internship site. Optional but recommended.
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex gap-4">
                   <Button 
