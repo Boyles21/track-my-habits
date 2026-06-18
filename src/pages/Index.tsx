@@ -1,31 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
-  CheckCircle, 
-  ArrowRight, 
-  GraduationCap, 
-  UserCheck, 
-  Building2,
-  ClipboardCheck,
-  BarChart3,
-  Shield,
-  Clock,
-  TrendingUp
-} from "lucide-react";
-import heroDashboard from "@/assets/hero-dashboard.png";
-import userStudentsImg from "@/assets/user-students.png";
-import userSupervisorsImg from "@/assets/user-supervisors.png";
-import userInstitutionsImg from "@/assets/user-institutions.png";
+import { BookOpen, Users, FileText, CircleCheck as CheckCircle, ArrowRight, GraduationCap, UserCheck, Building2, ClipboardCheck, ChartBar as BarChart3, Shield, Clock, TrendingUp } from "lucide-react";
 import featureLogbookImg from "@/assets/feature-logbook.png";
-import featureApprovalImg from "@/assets/feature-approval.png";
-import featureProgressImg from "@/assets/feature-progress.png";
-import featureDocumentsImg from "@/assets/feature-documents.png";
-import mockupDashboard from "@/assets/mockup-dashboard.png";
-import mockupLogbook from "@/assets/mockup-logbook.png";
-import mockupReview from "@/assets/mockup-review.png";
 
 const Index = () => {
   return (
@@ -90,11 +66,9 @@ const Index = () => {
             {/* Hero Dashboard Image */}
             <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
               <div className="relative rounded-xl bg-white/5 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-sm">
-                <img
-                  src={heroDashboard}
-                  alt="TrackMySIWES Dashboard showing progress tracking, logbook entries, and attendance analytics"
-                  className="rounded-lg shadow-lg w-full"
-                />
+                <div className="rounded-lg shadow-lg w-full aspect-[16/10] bg-gradient-to-br from-primary/20 via-muted/50 to-secondary/20 flex items-center justify-center">
+                  <span className="text-muted-foreground/40 text-sm font-medium">Dashboard Preview</span>
+                </div>
               </div>
               {/* Decorative Elements */}
               <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-secondary/20 blur-2xl" />
@@ -116,7 +90,7 @@ const Index = () => {
           <UserCard
             icon={<GraduationCap className="h-10 w-10" />}
             title="Students"
-            image={userStudentsImg}
+            image={undefined}
             features={[
               "Log daily SIWES activities",
               "Track attendance and progress",
@@ -126,7 +100,7 @@ const Index = () => {
           <UserCard
             icon={<UserCheck className="h-10 w-10" />}
             title="Supervisors"
-            image={userSupervisorsImg}
+            image={undefined}
             features={[
               "Review and approve logbooks",
               "Monitor assigned students",
@@ -136,7 +110,7 @@ const Index = () => {
           <UserCard
             icon={<Building2 className="h-10 w-10" />}
             title="Institutions / Coordinators"
-            image={userInstitutionsImg}
+            image={undefined}
             features={[
               "Monitor SIWES participation",
               "Access progress analytics",
@@ -177,21 +151,21 @@ const Index = () => {
               icon={<ClipboardCheck className="h-7 w-7" />}
               title="Supervisor Review & Approval"
               description="Supervisors review, comment, and approve logbook submissions with ease."
-              image={featureApprovalImg}
+              image={undefined}
               accentColor="from-emerald-500/20 to-emerald-600/10"
             />
             <FeatureCard
               icon={<Clock className="h-7 w-7" />}
               title="Progress & Attendance Tracking"
               description="Automatically track SIWES duration, hours, and completion status in real-time."
-              image={featureProgressImg}
+              image={undefined}
               accentColor="from-amber-500/20 to-amber-600/10"
             />
             <FeatureCard
               icon={<FileText className="h-7 w-7" />}
               title="Document Management"
               description="Upload and manage placement letters, reports, and certificates securely."
-              image={featureDocumentsImg}
+              image={undefined}
               accentColor="from-purple-500/20 to-purple-600/10"
             />
           </div>
@@ -217,7 +191,7 @@ const Index = () => {
           {/* Large Dashboard Mockup */}
           <div className="lg:col-span-7">
             <MockupCard
-              image={mockupDashboard}
+              image={undefined}
               title="Student Dashboard"
               caption="Track your SIWES progress with real-time analytics, hours logged, and activity overview at a glance."
               featured
@@ -227,12 +201,12 @@ const Index = () => {
           {/* Stacked Right Column */}
           <div className="flex flex-col gap-8 lg:col-span-5">
             <MockupCard
-              image={mockupLogbook}
+              image={undefined}
               title="Logbook Entry Form"
               caption="Record daily activities, skills learned, and challenges with an intuitive structured form."
             />
             <MockupCard
-              image={mockupReview}
+              image={undefined}
               title="Supervisor Review Panel"
               caption="Review, approve, or request revisions on student submissions with detailed feedback tools."
             />
