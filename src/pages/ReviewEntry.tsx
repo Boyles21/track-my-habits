@@ -20,9 +20,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award, AlertTriangle, Ban } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Loader2, CheckCircle, XCircle, Award, AlertTriangle, Ban, MapPin, ExternalLink } from "lucide-react";
 import SkillValidation from "@/components/logbook/SkillValidation";
 import { MAX_DAILY_HOURS, formatHours } from "@/lib/hours-validation";
+import { getMapsLink } from "@/lib/geocoding";
 
 interface Entry {
   id: string;
@@ -38,6 +39,11 @@ interface Entry {
   end_time: string | null;
   has_violation: boolean | null;
   violation_type: string | null;
+  check_in_lat: number | null;
+  check_in_lng: number | null;
+  check_in_address: string | null;
+  check_in_accuracy: number | null;
+  check_in_at: string | null;
 }
 
 interface Comment {
@@ -134,6 +140,11 @@ export default function ReviewEntry() {
         end_time: entryData.end_time,
         has_violation: entryData.has_violation,
         violation_type: entryData.violation_type,
+        check_in_lat: entryData.check_in_lat,
+        check_in_lng: entryData.check_in_lng,
+        check_in_address: entryData.check_in_address,
+        check_in_accuracy: entryData.check_in_accuracy,
+        check_in_at: entryData.check_in_at,
       });
 
       // Step 4: Fetch comments
@@ -422,6 +433,47 @@ export default function ReviewEntry() {
                 <p className="text-muted-foreground whitespace-pre-wrap">
                   {entry.challenges}
                 </p>
+              </div>
+            )}
+
+            {/* Location Check-in */}
+            {entry.check_in_lat != null && entry.check_in_lng != null && (
+              <div className="border-t pt-4">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-foreground mb-1">Location Check-in</h3>
+                    {entry.check_in_address ? (
+                      <p className="text-sm text-foreground mb-1">
+                        {entry.check_in_address}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic mb-1">
+                        Address not resolved
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {entry.check_in_lat.toFixed(5)}, {entry.check_in_lng.toFixed(5)}
+                      {entry.check_in_accuracy && ` (±${Math.round(entry.check_in_accuracy)}m)`}
+                      {entry.check_in_at && ` · ${new Date(entry.check_in_at).toLocaleTimeString()}`}
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      asChild
+                      className="mt-2 h-auto p-0"
+                    >
+                      <a
+                        href={getMapsLink(entry.check_in_lat, entry.check_in_lng)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View on map
+                        <ExternalLink className="h-3 w-3 ml-1" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>

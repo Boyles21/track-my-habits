@@ -20,7 +20,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2 } from "lucide-react";
+import { Loader2, ArrowLeft, Clock, MapPin, CheckCircle2, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import SkillPicker from "@/components/logbook/SkillPicker";
 import HoursValidationWarning from "@/components/logbook/HoursValidationWarning";
@@ -31,6 +31,7 @@ import {
   formatHours,
   HoursViolation,
 } from "@/lib/hours-validation";
+import { reverseGeocode, formatLocationDisplay, getMapsLink } from "@/lib/geocoding";
 
 const entrySchema = z.object({
   entry_date: z.string().min(1, "Date is required"),
@@ -63,25 +64,46 @@ export default function LogbookEntry() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [calculatedHours, setCalculatedHours] = useState<number>(0);
   const [hoursViolation, setHoursViolation] = useState<HoursViolation | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string; address?: string | null } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
+  const [geocodingLocation, setGeocodingLocation] = useState(false);
 
-  const captureLocation = () => {
+  const captureLocation = async () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation not supported on this device");
       return;
     }
     setLocLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
+      async (pos) => {
+        const newLocation = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
           at: new Date().toISOString(),
-        });
+          address: null as string | null,
+        };
+
+        // Attempt to resolve address via reverse geocoding
+        setGeocodingLocation(true);
+        try {
+          const address = await reverseGeocode(newLocation);
+          newLocation.address = address;
+        } catch (err) {
+          console.error('[v0] Geocoding failed:', err);
+          // Continue with coordinates only if geocoding fails
+        } finally {
+          setGeocodingLocation(false);
+        }
+
+        setLocation(newLocation);
         setLocLoading(false);
-        toast.success("Location captured");
+        
+        if (newLocation.address) {
+          toast.success("Location captured and verified");
+        } else {
+          toast.success("Location captured (address verification pending)");
+        }
       },
       (err) => {
         setLocLoading(false);
@@ -178,6 +200,7 @@ export default function LogbookEntry() {
           lng: data.check_in_lng,
           accuracy: data.check_in_accuracy ?? 0,
           at: data.check_in_at ?? new Date().toISOString(),
+          address: data.check_in_address,
         });
       }
     } catch (error) {
@@ -236,6 +259,8 @@ export default function LogbookEntry() {
             check_in_lng: location?.lng ?? null,
             check_in_accuracy: location?.accuracy ?? null,
             check_in_at: location?.at ?? null,
+            check_in_address: location?.address ?? null,
+            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
             status: "pending", // Reset to pending when resubmitting
           })
           .eq("id", id)
@@ -273,6 +298,8 @@ export default function LogbookEntry() {
             check_in_lng: location?.lng ?? null,
             check_in_accuracy: location?.accuracy ?? null,
             check_in_at: location?.at ?? null,
+            check_in_address: location?.address ?? null,
+            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
           })
           .select("id")
           .single();
@@ -485,10 +512,10 @@ export default function LogbookEntry() {
                       variant={location ? "outline" : "default"}
                       size="sm"
                       onClick={captureLocation}
-                      disabled={locLoading || isLoading}
+                      disabled={locLoading || geocodingLocation || isLoading}
                     >
-                      {locLoading ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Getting...</>
+                      {locLoading || geocodingLocation ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{geocodingLocation ? "Verifying..." : "Getting..."}</>
                       ) : location ? (
                         <><CheckCircle2 className="mr-2 h-4 w-4" />Recapture</>
                       ) : (
@@ -497,9 +524,39 @@ export default function LogbookEntry() {
                     </Button>
                   </div>
                   {location ? (
-                    <p className="text-xs text-muted-foreground">
-                      📍 {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m) · {new Date(location.at).toLocaleTimeString()}
-                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {location.address || "Address verification pending..."}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m)
+                          </p>
+                        </div>
+                        {location.lat && location.lng && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            className="shrink-0"
+                          >
+                            <a
+                              href={getMapsLink(location.lat, location.lng)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="View on map"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Captured at {new Date(location.at).toLocaleTimeString()}
+                      </p>
+                    </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">
                       Verify you're at your internship site. Optional but recommended.

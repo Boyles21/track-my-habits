@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ShieldAlert,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 import {
   TOTAL_REQUIRED_HOURS,
@@ -45,6 +46,9 @@ interface PendingEntry {
   hours_worked: number | null;
   has_violation: boolean | null;
   violation_type: string | null;
+  check_in_address: string | null;
+  check_in_lat: number | null;
+  check_in_lng: number | null;
 }
 
 interface SupervisorStats {
@@ -135,7 +139,7 @@ export default function SupervisorDashboard() {
 
       const { data: entries } = await supabase
         .from("logbook_entries")
-        .select("id, entry_date, activity_description, student_id, hours_worked, has_violation, violation_type")
+        .select("id, entry_date, activity_description, student_id, hours_worked, has_violation, violation_type, check_in_address, check_in_lat, check_in_lng")
         .in("student_id", studentIds)
         .eq("status", "pending")
         .order("has_violation", { ascending: false })
@@ -153,6 +157,9 @@ export default function SupervisorDashboard() {
             hours_worked: entry.hours_worked,
             has_violation: entry.has_violation,
             violation_type: entry.violation_type,
+            check_in_address: entry.check_in_address,
+            check_in_lat: entry.check_in_lat,
+            check_in_lng: entry.check_in_lng,
           }))
         );
       }
@@ -421,6 +428,12 @@ export default function SupervisorDashboard() {
                       <p className="text-xs text-muted-foreground mt-1 truncate">
                         {new Date(entry.entry_date).toLocaleDateString()} · {entry.activity_description}
                       </p>
+                      {entry.check_in_address && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{entry.check_in_address}</span>
+                        </div>
+                      )}
                     </Link>
                   ))}
                 </div>
