@@ -171,6 +171,15 @@ export default function LogbookEntry() {
       if (entrySkills) {
         setSelectedSkills(entrySkills.map((es) => es.skill_id));
       }
+
+      if (data.check_in_lat != null && data.check_in_lng != null) {
+        setLocation({
+          lat: data.check_in_lat,
+          lng: data.check_in_lng,
+          accuracy: data.check_in_accuracy ?? 0,
+          at: data.check_in_at ?? new Date().toISOString(),
+        });
+      }
     } catch (error) {
       console.error("Error fetching entry:", error);
       toast.error("Failed to load entry");
