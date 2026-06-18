@@ -35,6 +35,7 @@ import {
 import {
   getCurrentPosition,
   validateGpsAccuracy,
+  detectFakeGps,
   processGeofenceValidation,
   formatDistance,
   getMapsLink,
@@ -177,20 +178,23 @@ export default function LogbookEntry() {
       const position = await getCurrentPosition();
       const { latitude, longitude, accuracy } = position.coords;
 
-      // Step 2: Validate GPS accuracy
-      const accuracyError = validateGpsAccuracy(accuracy, 50);
-      if (accuracyError) {
-        setLocError(accuracyError);
-        toast.warning(accuracyError);
+      // Step 2: Detect potential fake / mock GPS — warn but do not block here
+      // (server-side trigger is the authoritative enforcement layer)
+      const fakeWarnings = detectFakeGps(position);
+      if (fakeWarnings.length > 0) {
+        console.warn("Potential fake GPS detected:", fakeWarnings);
       }
 
-      // Step 3: Check geofence against organization
-      const validation = processGeofenceValidation(
-        { lat: latitude, lng: longitude },
-        accuracy,
-        organization
-      );
+      // Step 3: Validate GPS accuracy — BLOCK if too poor
+      const accuracyError = validateGpsAccuracy(accuracy, 30);
+      if (accuracyError) {
+        setLocError(accuracyError);
+        toast.error(accuracyError);
+        setLocLoading(false);
+        return;
+      }
 
+      // Step 4: Pre-flight checks for org / geofence config
       if (!organization) {
         setLocError("No organization assigned. Contact your supervisor or admin.");
         toast.error("No organization assigned for attendance verification");
@@ -199,8 +203,25 @@ export default function LogbookEntry() {
       }
 
       if (!hasValidGeofence(organization)) {
-        setLocError(`${organization.name} has not configured attendance location.`);
+        setLocError(`${organization.name} has not configured attendance location. Contact admin.`);
         toast.error("Organization location not configured. Contact admin.");
+        setLocLoading(false);
+        return;
+      }
+
+      // Step 5: Run client-side geofence check (for immediate UX feedback)
+      const validation = processGeofenceValidation(
+        { lat: latitude, lng: longitude },
+        accuracy,
+        organization,
+      );
+
+      // Surface any accuracy / config warnings
+      validation.warnings.forEach((w) => toast.warning(w));
+
+      if (!validation.isValid && validation.error) {
+        setLocError(validation.error);
+        toast.error(validation.error);
         setLocLoading(false);
         return;
       }
@@ -211,7 +232,7 @@ export default function LogbookEntry() {
         accuracy,
         at: new Date().toISOString(),
         organizationName: organization.name,
-        distanceMeters: validation.distance!,
+        distanceMeters: validation.distance ?? 0,
         isInside: validation.isInside,
         radius: organization.geofence_radius,
       };
@@ -219,9 +240,13 @@ export default function LogbookEntry() {
       setCheckIn(newCheckIn);
 
       if (validation.isInside) {
-        toast.success(`Attendance verified - within ${formatDistance(validation.distance!)} of ${organization.name}`);
+        toast.success(
+          `Attendance verified — within ${formatDistance(validation.distance!)} of ${organization.name}`,
+        );
       } else {
-        toast.error(`Outside attendance zone. Distance: ${formatDistance(validation.distance!)} (Allowed: ${organization.geofence_radius}m)`);
+        toast.error(
+          `Outside attendance zone. Distance: ${formatDistance(validation.distance!)} (Allowed: ${organization.geofence_radius} m)`,
+        );
       }
     } catch (err: any) {
       setLocError(err.message || "Failed to capture location");
