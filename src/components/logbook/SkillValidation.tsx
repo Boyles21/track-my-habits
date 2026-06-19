@@ -81,7 +81,7 @@ export default function SkillValidation({
       });
       setRatings(initialRatings);
     } catch (error) {
-      console.error("Error fetching entry skills:", error);
+      console.error("[v0] Error fetching entry skills:", error);
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export default function SkillValidation({
       toast.success("Skill validated");
       onValidationComplete?.();
     } catch (error) {
-      console.error("Error validating skill:", error);
+      console.error("[v0] Error validating skill:", error);
       toast.error("Failed to validate skill");
     } finally {
       setValidating(null);
@@ -160,7 +160,7 @@ export default function SkillValidation({
       toast.success("All skills validated");
       onValidationComplete?.();
     } catch (error) {
-      console.error("Error validating skills:", error);
+      console.error("[v0] Error validating skills:", error);
       toast.error("Failed to validate skills");
     } finally {
       setValidating(null);

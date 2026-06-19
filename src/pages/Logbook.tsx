@@ -60,7 +60,7 @@ export default function Logbook() {
       if (error) throw error;
       setEntries(data || []);
     } catch (error) {
-      console.error("Error fetching entries:", error);
+      console.error("[v0] Error fetching entries:", error);
       toast.error("Failed to load entries");
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function Logbook() {
       toast.success("Entry deleted successfully");
       setEntries(entries.filter((e) => e.id !== id));
     } catch (error) {
-      console.error("Error deleting entry:", error);
+      console.error("[v0] Error deleting entry:", error);
       toast.error("Failed to delete entry");
     }
   };

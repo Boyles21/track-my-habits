@@ -45,7 +45,7 @@ export default function Profile() {
         faculty: profile.faculty || "",
         department: profile.department || "",
         programme: profile.programme || "",
-        staff_id: (profile as any).staff_id || "",
+        staff_id: "",
       });
     }
   }, [profile]);
@@ -88,7 +88,7 @@ export default function Profile() {
     setSaving(false);
 
     if (error) {
-      console.error(error);
+      console.error("[v0] Profile update error:", error);
       toast.error(error.message || "Failed to update profile");
     } else {
       toast.success("Profile updated successfully");

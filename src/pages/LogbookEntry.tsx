@@ -184,7 +184,7 @@ export default function LogbookEntry() {
         setLocationName(data.check_in_address || "");
       }
     } catch (error) {
-      console.error("Error fetching entry:", error);
+      console.error("[v0] Error fetching entry:", error);
       toast.error("Failed to load entry");
       navigate("/logbook");
     } finally {
@@ -300,7 +300,7 @@ export default function LogbookEntry() {
       }
       navigate("/logbook");
     } catch (error) {
-      console.error("Error saving entry:", error);
+      console.error("[v0] Error saving entry:", error);
       toast.error("Failed to save entry");
     } finally {
       setIsLoading(false);

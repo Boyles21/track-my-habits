@@ -33,10 +33,15 @@ interface Supervisor {
   institution: string | null;
 }
 
+interface Institution {
+  id: string;
+  name: string;
+}
+
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  institution: z.string().min(2, "Institution is required"),
+  institution_id: z.string().min(1, "Please select an institution"),
   faculty: z.string().min(1, "Please select a faculty"),
   department: z.string().min(1, "Please select a department"),
   programme: z.string().min(1, "Please select a programme"),
@@ -74,6 +79,8 @@ interface SignupFormProps {
 
 export default function SignupForm({ onToggleMode }: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
   const [departments, setDepartments] = useState<string[]>([]);
   const [programmes, setProgrammes] = useState<string[]>([]);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
@@ -86,7 +93,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
     defaultValues: {
       full_name: "",
       email: "",
-      institution: "",
+      institution_id: "",
       faculty: "",
       department: "",
       programme: "",
@@ -100,24 +107,39 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
 
   const watchRole = form.watch("role");
 
-  // Fetch supervisors on mount
+  // Fetch institutions and supervisors on mount
   useEffect(() => {
-    const fetchSupervisors = async () => {
+    const fetchInstitutionsAndSupervisors = async () => {
+      setInstitutionsLoading(true);
       setSupervisorsLoading(true);
       try {
-        const { data, error } = await supabase.rpc("get_supervisors");
-        if (error) {
-          console.error("Error fetching supervisors:", error);
+        // Fetch institutions
+        const { data: institutionsData, error: institutionsError } = await supabase
+          .from("institutions")
+          .select("id, name")
+          .order("name", { ascending: true });
+
+        if (institutionsError) {
+          console.error("[v0] Error fetching institutions:", institutionsError);
         } else {
-          setSupervisors(data || []);
+          setInstitutions(institutionsData || []);
+        }
+
+        // Fetch supervisors
+        const { data: supervisorsData, error: supervisorsError } = await supabase.rpc("get_supervisors");
+        if (supervisorsError) {
+          console.error("[v0] Error fetching supervisors:", supervisorsError);
+        } else {
+          setSupervisors(supervisorsData || []);
         }
       } catch (err) {
-        console.error("Error fetching supervisors:", err);
+        console.error("[v0] Error fetching institutions/supervisors:", err);
       } finally {
+        setInstitutionsLoading(false);
         setSupervisorsLoading(false);
       }
     };
-    fetchSupervisors();
+    fetchInstitutionsAndSupervisors();
   }, []);
 
   const watchFaculty = form.watch("faculty");
@@ -152,7 +174,7 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
         email: data.email,
         password: data.password,
         full_name: data.full_name,
-        institution: data.institution,
+        institution_id: data.institution_id,
         faculty: data.faculty,
         department: data.department,
         programme: data.programme,
@@ -221,13 +243,36 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
 
           <FormField
             control={form.control}
-            name="institution"
+            name="institution_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Institution</FormLabel>
-                <FormControl>
-                  <Input placeholder="Your Institution" {...field} disabled={isLoading} />
-                </FormControl>
+                <FormLabel>Institution *</FormLabel>
+                {institutionsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading institutions...
+                  </div>
+                ) : institutions.length === 0 ? (
+                  <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                    <AlertCircle className="h-4 w-4" />
+                    No institutions available. Please contact the administrator.
+                  </div>
+                ) : (
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your institution" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {institutions.map((institution) => (
+                        <SelectItem key={institution.id} value={institution.id}>
+                          {institution.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}

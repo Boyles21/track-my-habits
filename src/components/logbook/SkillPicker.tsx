@@ -39,7 +39,7 @@ export default function SkillPicker({
       if (error) throw error;
       setSkills(data || []);
     } catch (error) {
-      console.error("Error fetching skills:", error);
+      console.error("[v0] Error fetching skills:", error);
     } finally {
       setLoading(false);
     }
