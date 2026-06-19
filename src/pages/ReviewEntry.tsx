@@ -442,21 +442,23 @@ export default function ReviewEntry() {
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground mb-1">Location Check-in</h3>
-                    {entry.check_in_address ? (
-                      <p className="text-sm text-foreground mb-1">
+                    <h3 className="font-medium text-foreground mb-2">Attendance Location</h3>
+                    {entry.check_in_address && (
+                      <p className="text-sm font-medium text-foreground mb-2">
                         {entry.check_in_address}
                       </p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground italic mb-1">
-                        Address not resolved
-                      </p>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      {entry.check_in_lat.toFixed(5)}, {entry.check_in_lng.toFixed(5)}
-                      {entry.check_in_accuracy && ` (±${Math.round(entry.check_in_accuracy)}m)`}
-                      {entry.check_in_at && ` · ${new Date(entry.check_in_at).toLocaleTimeString()}`}
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">GPS:</span> {entry.check_in_lat.toFixed(5)}, {entry.check_in_lng.toFixed(5)}
+                        {entry.check_in_accuracy && ` (±${Math.round(entry.check_in_accuracy)}m)`}
+                      </p>
+                      {entry.check_in_at && (
+                        <p className="text-xs text-muted-foreground">
+                          <span className="font-medium">Captured:</span> {new Date(entry.check_in_at).toLocaleTimeString()}
+                        </p>
+                      )}
+                    </div>
                     <Button
                       variant="link"
                       size="sm"
