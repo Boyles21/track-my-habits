@@ -31,7 +31,7 @@ import {
   formatHours,
   HoursViolation,
 } from "@/lib/hours-validation";
-import { reverseGeocode, formatLocationDisplay, getMapsLink } from "@/lib/geocoding";
+import { getMapsLink } from "@/lib/geocoding";
 
 const entrySchema = z.object({
   entry_date: z.string().min(1, "Date is required"),
@@ -64,46 +64,26 @@ export default function LogbookEntry() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [calculatedHours, setCalculatedHours] = useState<number>(0);
   const [hoursViolation, setHoursViolation] = useState<HoursViolation | null>(null);
-  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string; address?: string | null } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number; accuracy: number; at: string } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
-  const [geocodingLocation, setGeocodingLocation] = useState(false);
+  const [locationName, setLocationName] = useState<string>("");
 
-  const captureLocation = async () => {
+  const captureLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation not supported on this device");
       return;
     }
     setLocLoading(true);
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const newLocation = {
+      (pos) => {
+        setLocation({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
           at: new Date().toISOString(),
-          address: null as string | null,
-        };
-
-        // Attempt to resolve address via reverse geocoding
-        setGeocodingLocation(true);
-        try {
-          const address = await reverseGeocode(newLocation);
-          newLocation.address = address;
-        } catch (err) {
-          console.error('[v0] Geocoding failed:', err);
-          // Continue with coordinates only if geocoding fails
-        } finally {
-          setGeocodingLocation(false);
-        }
-
-        setLocation(newLocation);
+        });
         setLocLoading(false);
-        
-        if (newLocation.address) {
-          toast.success("Location captured and verified");
-        } else {
-          toast.success("Location captured (address verification pending)");
-        }
+        toast.success("GPS location captured. Please enter your location name below.");
       },
       (err) => {
         setLocLoading(false);
@@ -200,8 +180,8 @@ export default function LogbookEntry() {
           lng: data.check_in_lng,
           accuracy: data.check_in_accuracy ?? 0,
           at: data.check_in_at ?? new Date().toISOString(),
-          address: data.check_in_address,
         });
+        setLocationName(data.check_in_address || "");
       }
     } catch (error) {
       console.error("Error fetching entry:", error);
@@ -259,8 +239,8 @@ export default function LogbookEntry() {
             check_in_lng: location?.lng ?? null,
             check_in_accuracy: location?.accuracy ?? null,
             check_in_at: location?.at ?? null,
-            check_in_address: location?.address ?? null,
-            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
+            check_in_address: locationName || null,
+            check_in_geocoded_at: locationName ? new Date().toISOString() : null,
             status: "pending", // Reset to pending when resubmitting
           })
           .eq("id", id)
@@ -298,8 +278,8 @@ export default function LogbookEntry() {
             check_in_lng: location?.lng ?? null,
             check_in_accuracy: location?.accuracy ?? null,
             check_in_at: location?.at ?? null,
-            check_in_address: location?.address ?? null,
-            check_in_geocoded_at: location?.address ? new Date().toISOString() : null,
+            check_in_address: locationName || null,
+            check_in_geocoded_at: locationName ? new Date().toISOString() : null,
           })
           .select("id")
           .single();
@@ -512,54 +492,77 @@ export default function LogbookEntry() {
                       variant={location ? "outline" : "default"}
                       size="sm"
                       onClick={captureLocation}
-                      disabled={locLoading || geocodingLocation || isLoading}
+                      disabled={locLoading || isLoading}
                     >
-                      {locLoading || geocodingLocation ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{geocodingLocation ? "Verifying..." : "Getting..."}</>
+                      {locLoading ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Getting Location...</>
                       ) : location ? (
                         <><CheckCircle2 className="mr-2 h-4 w-4" />Recapture</>
                       ) : (
-                        "Capture Location"
+                        "Capture GPS Location"
                       )}
                     </Button>
                   </div>
-                  {location ? (
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">
-                            {location.address || "Address verification pending..."}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {location.lat.toFixed(5)}, {location.lng.toFixed(5)} (±{Math.round(location.accuracy)}m)
-                          </p>
-                        </div>
-                        {location.lat && location.lng && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                            className="shrink-0"
-                          >
-                            <a
-                              href={getMapsLink(location.lat, location.lng)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="View on map"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </Button>
+
+                  {location && (
+                    <div className="space-y-3">
+                      <FormField
+                        control={form.control}
+                        name="location_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Location Name *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="e.g., Anchor University Lagos, Main Building"
+                                value={locationName}
+                                onChange={(e) => setLocationName(e.target.value)}
+                                className="text-sm"
+                              />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Enter the exact name/location where you&apos;re checking in
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
                         )}
+                      />
+
+                      <div className="p-3 rounded bg-background/50 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">GPS Coordinates (Proof of Location)</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs text-foreground">
+                            {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            {location.accuracy && ` (±${Math.round(location.accuracy)}m)`}
+                          </p>
+                          {location.lat && location.lng && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                            >
+                              <a
+                                href={getMapsLink(location.lat, location.lng)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="View on map"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Captured at {new Date(location.at).toLocaleTimeString()}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Captured at {new Date(location.at).toLocaleTimeString()}
-                      </p>
                     </div>
-                  ) : (
+                  )}
+
+                  {!location && (
                     <p className="text-xs text-muted-foreground">
-                      Verify you're at your internship site. Optional but recommended.
+                      Capture your GPS location to verify attendance. Optional but recommended.
                     </p>
                   )}
                 </div>
