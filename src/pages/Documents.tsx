@@ -75,7 +75,7 @@ export default function Documents() {
       if (error) throw error;
       setDocuments(data || []);
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      console.error("[v0] Error fetching documents:", error);
       toast.error("Failed to load documents");
     } finally {
       setLoading(false);

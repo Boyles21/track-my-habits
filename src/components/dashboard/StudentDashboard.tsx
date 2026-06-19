@@ -173,7 +173,7 @@ export default function StudentDashboard() {
         weeklyViolations,
       });
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("[v0] Error fetching student dashboard data:", error);
     } finally {
       setLoading(false);
     }

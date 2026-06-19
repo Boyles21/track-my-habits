@@ -96,7 +96,7 @@ export default function AdminDashboard() {
       });
       setRecentActivity(audit.data || []);
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("[v0] Error fetching admin dashboard data:", error);
     } finally {
       setLoading(false);
     }

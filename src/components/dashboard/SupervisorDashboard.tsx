@@ -179,7 +179,7 @@ export default function SupervisorDashboard() {
         totalHoursSupervised: totalHours,
       });
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("[v0] Error fetching supervisor dashboard data:", error);
     } finally {
       setLoading(false);
     }

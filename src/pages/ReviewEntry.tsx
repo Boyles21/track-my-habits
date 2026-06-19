@@ -173,7 +173,7 @@ export default function ReviewEntry() {
         setComments(mappedComments);
       }
     } catch (error) {
-      console.error("Error fetching entry:", error);
+      console.error("[v0] Error fetching entry:", error);
       toast.error("Failed to load entry");
     } finally {
       setLoading(false);
@@ -205,7 +205,7 @@ export default function ReviewEntry() {
       setEntry({ ...entry, status: "approved" });
       toast.success("Entry approved successfully");
     } catch (error) {
-      console.error("Error approving entry:", error);
+      console.error("[v0] Error approving entry:", error);
       toast.error("Failed to approve entry");
     } finally {
       setSubmitting(false);
@@ -256,7 +256,7 @@ export default function ReviewEntry() {
       setEntry({ ...entry, status: "revision_needed" });
       toast.success("Entry marked for revision");
     } catch (error) {
-      console.error("Error rejecting entry:", error);
+      console.error("[v0] Error rejecting entry:", error);
       toast.error("Failed to reject entry");
     } finally {
       setSubmitting(false);
@@ -299,7 +299,7 @@ export default function ReviewEntry() {
       form.reset();
       toast.success("Comment added successfully");
     } catch (error) {
-      console.error("Error adding comment:", error);
+      console.error("[v0] Error adding comment:", error);
       toast.error("Failed to add comment");
     } finally {
       setSubmitting(false);

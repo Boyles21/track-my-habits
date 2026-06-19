@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const APP_URL = "https://trackmysiwes.onrender.com";
+  const APP_URL = import.meta.env.VITE_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
 
   const signUp = async (data: SignUpData): Promise<{ error: Error | null }> => {
     const redirectUrl = `${APP_URL}/`;
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (assignError) {
-        console.error("Error assigning supervisor:", assignError);
+        console.error("[v0] Error assigning supervisor:", assignError);
         // Don't fail signup, but log the error - admin can fix later
       }
     }

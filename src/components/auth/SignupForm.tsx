@@ -107,12 +107,12 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
       try {
         const { data, error } = await supabase.rpc("get_supervisors");
         if (error) {
-          console.error("Error fetching supervisors:", error);
+          console.error("[v0] Error fetching supervisors:", error);
         } else {
           setSupervisors(data || []);
         }
       } catch (err) {
-        console.error("Error fetching supervisors:", err);
+        console.error("[v0] Error fetching supervisors:", err);
       } finally {
         setSupervisorsLoading(false);
       }

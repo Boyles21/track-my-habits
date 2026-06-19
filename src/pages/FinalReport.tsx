@@ -273,7 +273,7 @@ export default function FinalReport() {
         },
       });
     } catch (error) {
-      console.error("Error fetching report data:", error);
+      console.error("[v0] Error fetching report data:", error);
       toast.error("Failed to load report data");
     } finally {
       setLoading(false);
