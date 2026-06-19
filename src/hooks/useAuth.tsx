@@ -34,7 +34,7 @@ interface SignUpData {
   email: string;
   password: string;
   full_name: string;
-  institution: string;
+  institution_id: string;
   faculty: string;
   department: string;
   programme: string;
@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: data.full_name,
-          institution: data.institution,
+          institution_id: data.institution_id,
           faculty: data.faculty,
           department: data.department,
           programme: data.programme,
@@ -136,6 +136,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       return { error: new Error(error.message) };
+    }
+
+    // Log institution registration to audit table
+    if (authData.user) {
+      try {
+        await supabase.from("institution_audit_log").insert({
+          user_id: authData.user.id,
+          institution_id: data.institution_id,
+          user_type: data.role,
+          email: data.email,
+          full_name: data.full_name,
+          faculty: data.faculty,
+          department: data.department,
+          programme: data.programme,
+          staff_id: data.staff_id || null,
+        });
+      } catch (auditError) {
+        console.error("[v0] Error logging institution registration:", auditError);
+        // Don't fail signup if audit logging fails
+      }
     }
 
     // If student, assign to supervisor after successful signup
